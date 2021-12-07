@@ -93,7 +93,7 @@ namespace ILLink.RoslynAnalyzer
 		public static bool IsStaticConstructor ([NotNullWhen (returnValue: true)] this ISymbol? symbol)
 			=> (symbol as IMethodSymbol)?.MethodKind == MethodKind.StaticConstructor;
 
-		public static bool IsMemberInRequiresScope (this ISymbol member, string requiresAttributeName) 
+		public static bool IsInRequiresScope (this ISymbol member, string requiresAttributeName)
 		{
 			if (member.HasAttribute (requiresAttributeName) || (member.ContainingType is not null &&
 				member.ContainingType.HasAttribute (requiresAttributeName))) {
@@ -101,9 +101,10 @@ namespace ILLink.RoslynAnalyzer
 			}
 
 			// Check also for RequiresAttribute in the associated symbol
-			if (member is IMethodSymbol { AssociatedSymbol: { } associated } && associated.HasAttribute(requiresAttributeName))
-						return true;
+			if (member is IMethodSymbol { AssociatedSymbol: { } associated } && associated.HasAttribute (requiresAttributeName))
+				return true;
 
-					return false;)
-			}
+			return false;
+		}
+	}
 }

@@ -41,9 +41,7 @@ namespace ILLink.RoslynAnalyzer
 						return;
 
 					if (operationContext.ContainingSymbol is ISymbol containingSymbol) {
-						if (containingSymbol.HasAttribute (RequiresUnreferencedCodeAttribute)
-							||  (containingSymbol is not ITypeSymbol && 
-								 containingSymbol.ContainingType.HasAttribute (RequiresUnreferencedCodeAttribute))) {
+						if (containingSymbol.IsInRequiresScope(RequiresUnreferencedCodeAttribute)) {
 							return;
 						}
 					}

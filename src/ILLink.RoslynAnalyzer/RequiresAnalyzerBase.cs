@@ -343,7 +343,7 @@ namespace ILLink.RoslynAnalyzer
 		/// </summary>
 		protected bool IsMemberInRequiresScope (ISymbol member)
 		{
-			return member.IsMemberInRequiresScope (RequiresAttributeName);
+			return member.IsInRequiresScope (RequiresAttributeName);
 		}
 
 		// TODO: Consider sharing with linker DoesMethodRequireUnreferencedCode method
