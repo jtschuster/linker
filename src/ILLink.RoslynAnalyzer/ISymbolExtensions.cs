@@ -4,6 +4,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace ILLink.RoslynAnalyzer
 {
@@ -91,5 +92,18 @@ namespace ILLink.RoslynAnalyzer
 
 		public static bool IsStaticConstructor ([NotNullWhen (returnValue: true)] this ISymbol? symbol)
 			=> (symbol as IMethodSymbol)?.MethodKind == MethodKind.StaticConstructor;
-	}
+
+		public static bool IsMemberInRequiresScope (this ISymbol member, string requiresAttributeName) 
+		{
+			if (member.HasAttribute (requiresAttributeName) || (member.ContainingType is not null &&
+				member.ContainingType.HasAttribute (requiresAttributeName))) {
+				return true;
+			}
+
+			// Check also for RequiresAttribute in the associated symbol
+			if (member is IMethodSymbol { AssociatedSymbol: { } associated } && associated.HasAttribute(requiresAttributeName))
+						return true;
+
+					return false;)
+			}
 }
