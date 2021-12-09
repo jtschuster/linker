@@ -1653,6 +1653,8 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 			[RequiresUnreferencedCode ("RUC")]
 			class DerivedWithRequiresOnType : BaseWithoutRequiresOnType
 			{
+				// Bug https://github.com/dotnet/linker/issues/2379
+				[ExpectedWarning ("IL2046", ProducedBy = ProducedBy.Analyzer)]
 				public override void Method () { }
 			}
 
@@ -1688,6 +1690,8 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 					return 1;
 				}
 
+				// Bug https://github.com/dotnet/linker/issues/2379
+				[ExpectedWarning ("IL2046", ProducedBy = ProducedBy.Analyzer)]
 				public int Method (int a)
 				{
 					return a;
