@@ -1293,7 +1293,6 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 				public string PropertyAnnotationInProperty { get; set; }
 
 				[ExpectedWarning ("IL3003", "ImplementationClassWithoutRequires.PropertyAnnotationInPropertyAndAccessor", "IBaseWithRequires.PropertyAnnotationInPropertyAndAccessor", ProducedBy = ProducedBy.Analyzer)]
-
 				public string PropertyAnnotationInPropertyAndAccessor {
 					[RequiresAssemblyFiles("Message")]
 					[RequiresUnreferencedCode("Message")]
@@ -1654,7 +1653,7 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 			class DerivedWithRequiresOnType : BaseWithoutRequiresOnType
 			{
 				// Bug https://github.com/dotnet/linker/issues/2379
-				[ExpectedWarning ("IL2046", ProducedBy = ProducedBy.Analyzer)]
+				//[ExpectedWarning ("IL2046", ProducedBy = ProducedBy.Analyzer)]
 				public override void Method () { }
 			}
 
@@ -1691,7 +1690,7 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 				}
 
 				// Bug https://github.com/dotnet/linker/issues/2379
-				[ExpectedWarning ("IL2046", ProducedBy = ProducedBy.Analyzer)]
+				//[ExpectedWarning ("IL2046", ProducedBy = ProducedBy.Analyzer)]
 				public int Method (int a)
 				{
 					return a;
