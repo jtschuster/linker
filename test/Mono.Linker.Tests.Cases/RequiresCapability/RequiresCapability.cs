@@ -37,9 +37,6 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 	[LogDoesNotContain ("--UnusedImplementationClass.UnusedMethod--")]
 	// [LogDoesNotContain ("UnusedVirtualMethod2")] // https://github.com/dotnet/linker/issues/2106
 	// [LogContains ("--RequiresOnlyViaDescriptor--")]  // https://github.com/dotnet/linker/issues/2103
-
-	[ExpectedWarning ("IL2026", "RequiresOnFieldOnlyViaDescriptor.Field", FileName = "RequiresCapability.descriptor.xml", ProducedBy = ProducedBy.Trimmer)]
-
 	[ExpectedNoWarnings]
 	public class RequiresCapability
 	{
@@ -94,7 +91,6 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 
 		[ExpectedWarning ("IL2026", "Message for --RequiresWithMessageOnly--.")]
 		[ExpectedWarning ("IL3002", "Message for --RequiresWithMessageOnly--.", ProducedBy = ProducedBy.Analyzer)]
-		[ExpectedWarning ("IL3050", "Message for --RequiresWithMessageOnly--.", ProducedBy = ProducedBy.Analyzer)]
 		static void TestRequiresWithMessageOnlyOnMethod ()
 		{
 			RequiresWithMessageOnly ();
@@ -102,14 +98,12 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 
 		[RequiresUnreferencedCode ("Message for --RequiresWithMessageOnly--")]
 		[RequiresAssemblyFiles ("Message for --RequiresWithMessageOnly--")]
-		[RequiresDynamicCode ("Message for --RequiresWithMessageOnly--")]
 		static void RequiresWithMessageOnly ()
 		{
 		}
 
 		[ExpectedWarning ("IL2026", "Message for --RequiresWithMessageAndUrl--.", "https://helpurl")]
 		[ExpectedWarning ("IL3002", "Message for --RequiresWithMessageAndUrl--.", "https://helpurl", ProducedBy = ProducedBy.Analyzer)]
-		[ExpectedWarning ("IL3050", "Message for --RequiresWithMessageAndUrl--.", "https://helpurl", ProducedBy = ProducedBy.Analyzer)]
 		static void TestRequiresWithMessageAndUrlOnMethod ()
 		{
 			RequiresWithMessageAndUrl ();
@@ -117,14 +111,12 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 
 		[RequiresUnreferencedCode ("Message for --RequiresWithMessageAndUrl--", Url = "https://helpurl")]
 		[RequiresAssemblyFiles ("Message for --RequiresWithMessageAndUrl--", Url = "https://helpurl")]
-		[RequiresDynamicCode ("Message for --RequiresWithMessageAndUrl--", Url = "https://helpurl")]
 		static void RequiresWithMessageAndUrl ()
 		{
 		}
 
 		[ExpectedWarning ("IL2026", "Message for --ConstructorRequires--.")]
 		[ExpectedWarning ("IL3002", "Message for --ConstructorRequires--.", ProducedBy = ProducedBy.Analyzer)]
-		[ExpectedWarning ("IL3050", "Message for --ConstructorRequires--.", ProducedBy = ProducedBy.Analyzer)]
 		static void TestRequiresOnConstructor ()
 		{
 			new ConstructorRequires ();
@@ -134,7 +126,6 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 		{
 			[RequiresUnreferencedCode ("Message for --ConstructorRequires--")]
 			[RequiresAssemblyFiles ("Message for --ConstructorRequires--")]
-			[RequiresDynamicCode ("Message for --ConstructorRequires--")]
 			public ConstructorRequires ()
 			{
 			}
@@ -144,8 +135,6 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 		[ExpectedWarning ("IL2026", "Message for --setter PropertyRequires--.")]
 		[ExpectedWarning ("IL3002", "Message for --getter PropertyRequires--.", ProducedBy = ProducedBy.Analyzer)]
 		[ExpectedWarning ("IL3002", "Message for --setter PropertyRequires--.", ProducedBy = ProducedBy.Analyzer)]
-		[ExpectedWarning ("IL3050", "Message for --getter PropertyRequires--.", ProducedBy = ProducedBy.Analyzer)]
-		[ExpectedWarning ("IL3050", "Message for --setter PropertyRequires--.", ProducedBy = ProducedBy.Analyzer)]
 		static void TestRequiresOnPropertyGetterAndSetter ()
 		{
 			_ = PropertyRequires;
@@ -155,12 +144,10 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 		static int PropertyRequires {
 			[RequiresUnreferencedCode ("Message for --getter PropertyRequires--")]
 			[RequiresAssemblyFiles ("Message for --getter PropertyRequires--")]
-			[RequiresDynamicCode ("Message for --getter PropertyRequires--")]
 			get { return 42; }
 
 			[RequiresUnreferencedCode ("Message for --setter PropertyRequires--")]
 			[RequiresAssemblyFiles ("Message for --setter PropertyRequires--")]
-			[RequiresDynamicCode ("Message for --setter PropertyRequires--")]
 			set { }
 		}
 
@@ -172,7 +159,6 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 
 			[RequiresUnreferencedCode ("Message for --MethodWithRequires--")]
 			[RequiresAssemblyFiles ("Message for --MethodWithRequires--")]
-			[RequiresDynamicCode ("Message for --MethodWithRequires--")]
 			static void MethodWithRequires ()
 			{
 			}
@@ -182,7 +168,6 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 
 			[RequiresUnreferencedCode ("")]
 			[RequiresAssemblyFiles ("")]
-			[RequiresDynamicCode ("")]
 			static void TestMethodWithRequires ()
 			{
 				// Normally this would warn, but with the attribute on this method it should be auto-suppressed
@@ -191,7 +176,6 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 
 			[RequiresUnreferencedCode ("")]
 			[RequiresAssemblyFiles ("")]
-			[RequiresDynamicCode ("")]
 			static void TestParameter ()
 			{
 				_unknownType.RequiresPublicMethods ();
@@ -199,7 +183,6 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 
 			[RequiresUnreferencedCode ("")]
 			[RequiresAssemblyFiles ("")]
-			[RequiresDynamicCode ("")]
 			static void TestReturnValue ()
 			{
 				GetUnknownType ().RequiresPublicEvents ();
@@ -207,7 +190,6 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 
 			[RequiresUnreferencedCode ("")]
 			[RequiresAssemblyFiles ("")]
-			[RequiresDynamicCode ("")]
 			static void TestField ()
 			{
 				_requiresPublicConstructors = _unknownType;
@@ -215,7 +197,6 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 
 			[UnconditionalSuppressMessage ("Trimming", "IL2026")]
 			[UnconditionalSuppressMessage ("SingleFile", "IL3002")]
-			[UnconditionalSuppressMessage ("AOT", "IL3050")]
 			public static void Test ()
 			{
 				TestMethodWithRequires ();
@@ -236,7 +217,6 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 
 			[RequiresUnreferencedCode ("")]
 			[RequiresAssemblyFiles ("")]
-			[RequiresDynamicCode ("")]
 			static void TestGenericMethod ()
 			{
 				GenericMethodRequiresPublicMethods<TUnknown> ();
@@ -244,7 +224,6 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 
 			[RequiresUnreferencedCode ("")]
 			[RequiresAssemblyFiles ("")]
-			[RequiresDynamicCode ("")]
 			static void TestGenericMethodMismatch ()
 			{
 				GenericMethodRequiresPublicMethods<TPublicProperties> ();
@@ -252,7 +231,6 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 
 			[RequiresUnreferencedCode ("")]
 			[RequiresAssemblyFiles ("")]
-			[RequiresDynamicCode ("")]
 			static void TestGenericType ()
 			{
 				new GenericTypeRequiresPublicFields<TUnknown> ();
@@ -260,7 +238,6 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 
 			[RequiresUnreferencedCode ("")]
 			[RequiresAssemblyFiles ("")]
-			[RequiresDynamicCode ("")]
 			static void TestMakeGenericTypeWithStaticTypes ()
 			{
 				typeof (GenericTypeRequiresPublicFields<>).MakeGenericType (typeof (TUnknown));
@@ -268,7 +245,6 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 
 			[RequiresUnreferencedCode ("")]
 			[RequiresAssemblyFiles ("")]
-			[RequiresDynamicCode ("")]
 			static void TestMakeGenericTypeWithDynamicTypes ()
 			{
 				typeof (GenericTypeRequiresPublicFields<>).MakeGenericType (_unknownType);
@@ -276,7 +252,6 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 
 			[RequiresUnreferencedCode ("")]
 			[RequiresAssemblyFiles ("")]
-			[RequiresDynamicCode ("")]
 			static void TestMakeGenericMethod ()
 			{
 				typeof (SuppressGenericParameters<TUnknown, TPublicProperties>)
@@ -286,7 +261,6 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 
 			[UnconditionalSuppressMessage ("Trimming", "IL2026")]
 			[UnconditionalSuppressMessage ("SingleFile", "IL3002")]
-			[UnconditionalSuppressMessage ("AOT", "IL3050")]
 			public static void Test ()
 			{
 				TestGenericMethod ();
@@ -346,7 +320,6 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 		{
 			[RequiresUnreferencedCode ("Message for --BaseType.VirtualMethodRequires--")]
 			[RequiresAssemblyFiles ("Message for --BaseType.VirtualMethodRequires--")]
-			[RequiresDynamicCode ("Message for --BaseType.VirtualMethodRequires--")]
 			public virtual void VirtualMethodRequires ()
 			{
 			}
@@ -356,7 +329,6 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 		{
 			[RequiresUnreferencedCode ("Message for --TypeWhichOverridesMethod.VirtualMethodRequires--")]
 			[RequiresAssemblyFiles ("Message for --TypeWhichOverridesMethod.VirtualMethodRequires--")]
-			[RequiresDynamicCode ("Message for --TypeWhichOverridesMethod.VirtualMethodRequires--")]
 			public override void VirtualMethodRequires ()
 			{
 			}
@@ -364,7 +336,6 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 
 		[ExpectedWarning ("IL2026", "--BaseType.VirtualMethodRequires--")]
 		[ExpectedWarning ("IL3002", "--BaseType.VirtualMethodRequires--", ProducedBy = ProducedBy.Analyzer)]
-		[ExpectedWarning ("IL3050", "--BaseType.VirtualMethodRequires--", ProducedBy = ProducedBy.Analyzer)]
 		static void TestBaseTypeVirtualMethodRequires ()
 		{
 			var tmp = new BaseType ();
@@ -374,7 +345,6 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 		[LogDoesNotContain ("TypeWhichOverridesMethod.VirtualMethodRequires")]
 		[ExpectedWarning ("IL2026", "--BaseType.VirtualMethodRequires--")]
 		[ExpectedWarning ("IL3002", "--BaseType.VirtualMethodRequires--", ProducedBy = ProducedBy.Analyzer)]
-		[ExpectedWarning ("IL3050", "--BaseType.VirtualMethodRequires--", ProducedBy = ProducedBy.Analyzer)]
 		static void TestTypeWhichOverridesMethodVirtualMethodRequires ()
 		{
 			var tmp = new TypeWhichOverridesMethod ();
@@ -384,7 +354,6 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 		[LogDoesNotContain ("TypeWhichOverridesMethod.VirtualMethodRequires")]
 		[ExpectedWarning ("IL2026", "--BaseType.VirtualMethodRequires--")]
 		[ExpectedWarning ("IL3002", "--BaseType.VirtualMethodRequires--", ProducedBy = ProducedBy.Analyzer)]
-		[ExpectedWarning ("IL3050", "--BaseType.VirtualMethodRequires--", ProducedBy = ProducedBy.Analyzer)]
 		static void TestTypeWhichOverridesMethodVirtualMethodRequiresOnBase ()
 		{
 			BaseType tmp = new TypeWhichOverridesMethod ();
@@ -396,7 +365,6 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 			public virtual int VirtualPropertyRequires {
 				[RequiresUnreferencedCode ("Message for --PropertyBaseType.VirtualPropertyRequires--")]
 				[RequiresAssemblyFiles ("Message for --PropertyBaseType.VirtualPropertyRequires--")]
-				[RequiresDynamicCode ("Message for --PropertyBaseType.VirtualPropertyRequires--")]
 				get;
 			}
 		}
@@ -406,7 +374,6 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 			public override int VirtualPropertyRequires {
 				[RequiresUnreferencedCode ("Message for --TypeWhichOverridesProperty.VirtualPropertyRequires--")]
 				[RequiresAssemblyFiles ("Message for --TypeWhichOverridesProperty.VirtualPropertyRequires--")]
-				[RequiresDynamicCode ("Message for --TypeWhichOverridesProperty.VirtualPropertyRequires--")]
 				get { return 1; }
 			}
 		}
@@ -414,7 +381,6 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 		[LogDoesNotContain ("TypeWhichOverridesProperty.VirtualPropertyRequires")]
 		[ExpectedWarning ("IL2026", "--PropertyBaseType.VirtualPropertyRequires--")]
 		[ExpectedWarning ("IL3002", "--PropertyBaseType.VirtualPropertyRequires--", ProducedBy = ProducedBy.Analyzer)]
-		[ExpectedWarning ("IL3050", "--PropertyBaseType.VirtualPropertyRequires--", ProducedBy = ProducedBy.Analyzer)]
 		static void TestTypeWhichOverridesVirtualPropertyRequires ()
 		{
 			var tmp = new TypeWhichOverridesProperty ();
@@ -472,12 +438,10 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 		{
 			[ExpectedWarning ("IL2026", "Message from --TypeIsBeforeFieldInit.AnnotatedMethod--", ProducedBy = ProducedBy.Analyzer)]
 			[ExpectedWarning ("IL3002", "Message from --TypeIsBeforeFieldInit.AnnotatedMethod--", ProducedBy = ProducedBy.Analyzer)]
-			[ExpectedWarning ("IL3050", "Message from --TypeIsBeforeFieldInit.AnnotatedMethod--", ProducedBy = ProducedBy.Analyzer)]
 			public static int field = AnnotatedMethod ();
 
 			[RequiresUnreferencedCode ("Message from --TypeIsBeforeFieldInit.AnnotatedMethod--")]
 			[RequiresAssemblyFiles ("Message from --TypeIsBeforeFieldInit.AnnotatedMethod--")]
-			[RequiresDynamicCode ("Message from --TypeIsBeforeFieldInit.AnnotatedMethod--")]
 			public static int AnnotatedMethod () => 42;
 		}
 
@@ -499,14 +463,12 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 			[ExpectedWarning ("IL2116", "StaticCtorTriggeredByMethodCall..cctor()", ProducedBy = ProducedBy.Trimmer)]
 			[RequiresUnreferencedCode ("Message for --StaticCtorTriggeredByMethodCall.Cctor--")]
 			[RequiresAssemblyFiles ("Message for --StaticCtorTriggeredByMethodCall.Cctor--")]
-			[RequiresDynamicCode ("Message for --StaticCtorTriggeredByMethodCall.Cctor--")]
 			static StaticCtorTriggeredByMethodCall ()
 			{
 			}
 
 			[RequiresUnreferencedCode ("Message for --StaticCtorTriggeredByMethodCall.TriggerStaticCtorMarking--")]
 			[RequiresAssemblyFiles ("Message for --StaticCtorTriggeredByMethodCall.TriggerStaticCtorMarking--")]
-			[RequiresDynamicCode ("Message for --StaticCtorTriggeredByMethodCall.TriggerStaticCtorMarking--")]
 			public void TriggerStaticCtorMarking ()
 			{
 			}
@@ -514,7 +476,6 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 
 		[ExpectedWarning ("IL2026", "--StaticCtorTriggeredByMethodCall.TriggerStaticCtorMarking--")]
 		[ExpectedWarning ("IL3002", "--StaticCtorTriggeredByMethodCall.TriggerStaticCtorMarking--", ProducedBy = ProducedBy.Analyzer)]
-		[ExpectedWarning ("IL3050", "--StaticCtorTriggeredByMethodCall.TriggerStaticCtorMarking--", ProducedBy = ProducedBy.Analyzer)]
 		static void TestStaticCtorTriggeredByMethodCall ()
 		{
 			new StaticCtorTriggeredByMethodCall ().TriggerStaticCtorMarking ();
@@ -536,7 +497,6 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 		[LogDoesNotContain ("ImplementationClass.MethodWithRequires")]
 		[ExpectedWarning ("IL2026", "--IRequires.MethodWithRequires--")]
 		[ExpectedWarning ("IL3002", "--IRequires.MethodWithRequires--", ProducedBy = ProducedBy.Analyzer)]
-		[ExpectedWarning ("IL3050", "--IRequires.MethodWithRequires--", ProducedBy = ProducedBy.Analyzer)]
 		static void TestInterfaceMethodWithRequires ()
 		{
 			IRequires inst = new ImplementationClass ();
@@ -550,7 +510,6 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 		{
 			[RequiresUnreferencedCode ("Message for --IRequires.MethodWithRequires--")]
 			[RequiresAssemblyFiles ("Message for --IRequires.MethodWithRequires--")]
-			[RequiresDynamicCode ("Message for --IRequires.MethodWithRequires--")]
 			public void MethodWithRequires ();
 		}
 
@@ -558,7 +517,6 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 		{
 			[RequiresUnreferencedCode ("Message for --ImplementationClass.RequiresMethod--")]
 			[RequiresAssemblyFiles ("Message for --ImplementationClass.RequiresMethod--")]
-			[RequiresDynamicCode ("Message for --ImplementationClass.RequiresMethod--")]
 			public void MethodWithRequires ()
 			{
 			}
@@ -568,7 +526,6 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 		{
 			[RequiresUnreferencedCode ("Message for --CovariantReturnBase.GetRequires--")]
 			[RequiresAssemblyFiles ("Message for --CovariantReturnBase.GetRequires--")]
-			[RequiresDynamicCode ("Message for --CovariantReturnBase.GetRequires--")]
 			public abstract BaseReturnType GetRequires ();
 		}
 
@@ -576,7 +533,6 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 		{
 			[RequiresUnreferencedCode ("Message for --CovariantReturnDerived.GetRequires--")]
 			[RequiresAssemblyFiles ("Message for --CovariantReturnDerived.GetRequires--")]
-			[RequiresDynamicCode ("Message for --CovariantReturnDerived.GetRequires--")]
 			public override DerivedReturnType GetRequires ()
 			{
 				return null;
@@ -586,7 +542,6 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 		[LogDoesNotContain ("--CovariantReturnBase.GetRequires--")]
 		[ExpectedWarning ("IL2026", "--CovariantReturnDerived.GetRequires--")]
 		[ExpectedWarning ("IL3002", "--CovariantReturnDerived.GetRequires--", ProducedBy = ProducedBy.Analyzer)]
-		[ExpectedWarning ("IL3050", "--CovariantReturnDerived.GetRequires--", ProducedBy = ProducedBy.Analyzer)]
 		static void TestCovariantReturnCallOnDerived ()
 		{
 			var tmp = new CovariantReturnDerived ();
@@ -595,7 +550,6 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 
 		[ExpectedWarning ("IL2026", "--Method--")]
 		[ExpectedWarning ("IL3002", "--Method--", ProducedBy = ProducedBy.Analyzer)]
-		[ExpectedWarning ("IL3050", "--Method--", ProducedBy = ProducedBy.Analyzer)]
 		static void TestRequiresInMethodFromCopiedAssembly ()
 		{
 			var tmp = new RequiresInCopyAssembly ();
@@ -617,14 +571,12 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 
 		[RequiresUnreferencedCode ("Message for --RequiresInDynamicDependency--")]
 		[RequiresAssemblyFiles ("Message for --RequiresInDynamicDependency--")]
-		[RequiresDynamicCode ("Message for --RequiresInDynamicDependency--")]
 		static void RequiresInDynamicDependency ()
 		{
 		}
 
 		[ExpectedWarning ("IL2026", "--RequiresInDynamicDependency--")]
 		[ExpectedWarning ("IL3002", "--RequiresInDynamicDependency--", ProducedBy = ProducedBy.Analyzer)]
-		[ExpectedWarning ("IL3050", "--RequiresInDynamicDependency--", ProducedBy = ProducedBy.Analyzer)]
 		[DynamicDependency ("RequiresInDynamicDependency")]
 		static void TestRequiresInDynamicDependency ()
 		{
@@ -633,14 +585,12 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 
 		[RequiresUnreferencedCode ("Linker adds a trailing period to this message")]
 		[RequiresAssemblyFiles ("Linker adds a trailing period to this message")]
-		[RequiresDynamicCode ("Linker adds a trailing period to this message")]
 		static void WarningMessageWithoutEndingPeriod ()
 		{
 		}
 
 		[ExpectedWarning ("IL2026", "Linker adds a trailing period to this message.")]
 		[ExpectedWarning ("IL3002", "Linker adds a trailing period to this message.", ProducedBy = ProducedBy.Analyzer)]
-		[ExpectedWarning ("IL3050", "Linker adds a trailing period to this message.", ProducedBy = ProducedBy.Analyzer)]
 		static void TestThatTrailingPeriodIsAddedToMessage ()
 		{
 			WarningMessageWithoutEndingPeriod ();
@@ -648,7 +598,6 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 
 		[RequiresUnreferencedCode ("Linker does not add a period to this message.")]
 		[RequiresAssemblyFiles ("Linker does not add a period to this message.")]
-		[RequiresDynamicCode ("Linker does not add a period to this message.")]
 		static void WarningMessageEndsWithPeriod ()
 		{
 		}
@@ -656,7 +605,6 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 		[LogDoesNotContain ("Linker does not add a period to this message..")]
 		[ExpectedWarning ("IL2026", "Linker does not add a period to this message.")]
 		[ExpectedWarning ("IL3002", "Linker does not add a period to this message.", ProducedBy = ProducedBy.Analyzer)]
-		[ExpectedWarning ("IL3050", "Linker does not add a period to this message.", ProducedBy = ProducedBy.Analyzer)]
 		static void TestThatTrailingPeriodIsNotDuplicatedInWarningMessage ()
 		{
 			WarningMessageEndsWithPeriod ();
@@ -684,7 +632,6 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 			{
 				[RequiresUnreferencedCode ("Message for --AttributeWhichRequiresAttribute.ctor--")]
 				[RequiresAssemblyFiles ("Message for --AttributeWhichRequiresAttribute.ctor--")]
-				[RequiresDynamicCode ("Message for --AttributeWhichRequiresAttribute.ctor--")]
 				public AttributeWhichRequiresAttribute ()
 				{
 				}
@@ -701,14 +648,12 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 
 					[RequiresUnreferencedCode ("--AttributeWhichRequiresOnPropertyAttribute.PropertyWhichRequires--")]
 					[RequiresAssemblyFiles ("--AttributeWhichRequiresOnPropertyAttribute.PropertyWhichRequires--")]
-					[RequiresDynamicCode ("--AttributeWhichRequiresOnPropertyAttribute.PropertyWhichRequires--")]
 					set { }
 				}
 			}
 
 			[ExpectedWarning ("IL2026", "--AttributeWhichRequiresAttribute.ctor--")]
 			[ExpectedWarning ("IL3002", "--AttributeWhichRequiresAttribute.ctor--", ProducedBy = ProducedBy.Analyzer)]
-			[ExpectedWarning ("IL3050", "--AttributeWhichRequiresAttribute.ctor--", ProducedBy = ProducedBy.Analyzer)]
 			class GenericTypeWithAttributedParameter<[AttributeWhichRequires] T>
 			{
 				public static void TestMethod () { }
@@ -716,7 +661,6 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 
 			[ExpectedWarning ("IL2026", "--AttributeWhichRequiresAttribute.ctor--")]
 			[ExpectedWarning ("IL3002", "--AttributeWhichRequiresAttribute.ctor--", ProducedBy = ProducedBy.Analyzer)]
-			[ExpectedWarning ("IL3050", "--AttributeWhichRequiresAttribute.ctor--", ProducedBy = ProducedBy.Analyzer)]
 			static void GenericMethodWithAttributedParameter<[AttributeWhichRequires] T> () { }
 
 			static void TestRequiresOnAttributeOnGenericParameter ()
@@ -727,10 +671,8 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 
 			[ExpectedWarning ("IL2026", "--AttributeWhichRequiresAttribute.ctor--")]
 			[ExpectedWarning ("IL3002", "--AttributeWhichRequiresAttribute.ctor--", ProducedBy = ProducedBy.Analyzer)]
-			[ExpectedWarning ("IL3050", "--AttributeWhichRequiresAttribute.ctor--", ProducedBy = ProducedBy.Analyzer)]
 			[ExpectedWarning ("IL2026", "--AttributeWhichRequiresOnPropertyAttribute.PropertyWhichRequires--")]
 			[ExpectedWarning ("IL3002", "--AttributeWhichRequiresOnPropertyAttribute.PropertyWhichRequires--", ProducedBy = ProducedBy.Analyzer)]
-			[ExpectedWarning ("IL3050", "--AttributeWhichRequiresOnPropertyAttribute.PropertyWhichRequires--", ProducedBy = ProducedBy.Analyzer)]
 			[AttributeWhichRequires]
 			[AttributeWhichRequiresOnProperty (PropertyWhichRequires = true)]
 			class TypeWithAttributeWhichRequires
@@ -739,30 +681,24 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 
 			[ExpectedWarning ("IL2026", "--AttributeWhichRequiresAttribute.ctor--")]
 			[ExpectedWarning ("IL3002", "--AttributeWhichRequiresAttribute.ctor--", ProducedBy = ProducedBy.Analyzer)]
-			[ExpectedWarning ("IL3050", "--AttributeWhichRequiresAttribute.ctor--", ProducedBy = ProducedBy.Analyzer)]
 			[ExpectedWarning ("IL2026", "--AttributeWhichRequiresOnPropertyAttribute.PropertyWhichRequires--")]
 			[ExpectedWarning ("IL3002", "--AttributeWhichRequiresOnPropertyAttribute.PropertyWhichRequires--", ProducedBy = ProducedBy.Analyzer)]
-			[ExpectedWarning ("IL3050", "--AttributeWhichRequiresOnPropertyAttribute.PropertyWhichRequires--", ProducedBy = ProducedBy.Analyzer)]
 			[AttributeWhichRequires]
 			[AttributeWhichRequiresOnProperty (PropertyWhichRequires = true)]
 			static void MethodWithAttributeWhichRequires () { }
 
 			[ExpectedWarning ("IL2026", "--AttributeWhichRequiresAttribute.ctor--")]
 			[ExpectedWarning ("IL3002", "--AttributeWhichRequiresAttribute.ctor--", ProducedBy = ProducedBy.Analyzer)]
-			[ExpectedWarning ("IL3050", "--AttributeWhichRequiresAttribute.ctor--", ProducedBy = ProducedBy.Analyzer)]
 			[ExpectedWarning ("IL2026", "--AttributeWhichRequiresOnPropertyAttribute.PropertyWhichRequires--")]
 			[ExpectedWarning ("IL3002", "--AttributeWhichRequiresOnPropertyAttribute.PropertyWhichRequires--", ProducedBy = ProducedBy.Analyzer)]
-			[ExpectedWarning ("IL3050", "--AttributeWhichRequiresOnPropertyAttribute.PropertyWhichRequires--", ProducedBy = ProducedBy.Analyzer)]
 			[AttributeWhichRequires]
 			[AttributeWhichRequiresOnProperty (PropertyWhichRequires = true)]
 			static int _fieldWithAttributeWhichRequires;
 
 			[ExpectedWarning ("IL2026", "--AttributeWhichRequiresAttribute.ctor--")]
 			[ExpectedWarning ("IL3002", "--AttributeWhichRequiresAttribute.ctor--", ProducedBy = ProducedBy.Analyzer)]
-			[ExpectedWarning ("IL3050", "--AttributeWhichRequiresAttribute.ctor--", ProducedBy = ProducedBy.Analyzer)]
 			[ExpectedWarning ("IL2026", "--AttributeWhichRequiresOnPropertyAttribute.PropertyWhichRequires--")]
 			[ExpectedWarning ("IL3002", "--AttributeWhichRequiresOnPropertyAttribute.PropertyWhichRequires--", ProducedBy = ProducedBy.Analyzer)]
-			[ExpectedWarning ("IL3050", "--AttributeWhichRequiresOnPropertyAttribute.PropertyWhichRequires--", ProducedBy = ProducedBy.Analyzer)]
 			[AttributeWhichRequires]
 			[AttributeWhichRequiresOnProperty (PropertyWhichRequires = true)]
 			static bool PropertyWithAttributeWhichRequires { get; set; }
@@ -771,12 +707,10 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 			[AttributeWhichRequiresOnProperty (PropertyWhichRequires = true)]
 			[RequiresUnreferencedCode ("--MethodWhichRequiresWithAttributeWhichRequires--")]
 			[RequiresAssemblyFiles ("--MethodWhichRequiresWithAttributeWhichRequires--")]
-			[RequiresDynamicCode ("--MethodWhichRequiresWithAttributeWhichRequires--")]
 			static void MethodWhichRequiresWithAttributeWhichRequires () { }
 
 			[ExpectedWarning ("IL2026", "--MethodWhichRequiresWithAttributeWhichRequires--")]
 			[ExpectedWarning ("IL3002", "--MethodWhichRequiresWithAttributeWhichRequires--", ProducedBy = ProducedBy.Analyzer)]
-			[ExpectedWarning ("IL3050", "--MethodWhichRequiresWithAttributeWhichRequires--", ProducedBy = ProducedBy.Analyzer)]
 			static void TestMethodWhichRequiresWithAttributeWhichRequires ()
 			{
 				MethodWhichRequiresWithAttributeWhichRequires ();
@@ -798,25 +732,17 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 		{
 		}
 
-		[RequiresUnreferencedCode ("Message for --RequiresOnFieldOnlyViaDescriptor--")]
-		class RequiresOnFieldOnlyViaDescriptor
-		{
-			public static int Field;
-		}
-
 		class RequiresOnGenerics
 		{
 			class GenericWithStaticMethod<T>
 			{
 				[RequiresUnreferencedCode ("Message for --GenericTypeWithStaticMethodWhichRequires--")]
 				[RequiresAssemblyFiles ("Message for --GenericTypeWithStaticMethodWhichRequires--")]
-				[RequiresDynamicCode ("Message for --GenericTypeWithStaticMethodWhichRequires--")]
 				public static void GenericTypeWithStaticMethodWhichRequires () { }
 			}
 
 			[ExpectedWarning ("IL2026", "--GenericTypeWithStaticMethodWhichRequires--")]
 			[ExpectedWarning ("IL3002", "--GenericTypeWithStaticMethodWhichRequires--", ProducedBy = ProducedBy.Analyzer)]
-			[ExpectedWarning ("IL3050", "--GenericTypeWithStaticMethodWhichRequires--", ProducedBy = ProducedBy.Analyzer)]
 			public static void GenericTypeWithStaticMethodViaLdftn ()
 			{
 				var _ = new Action (GenericWithStaticMethod<TestType>.GenericTypeWithStaticMethodWhichRequires);
@@ -834,7 +760,6 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 			{
 				[RequiresUnreferencedCode ("Message for --CovariantReturnViaLdftn.Base.GetRequires--")]
 				[RequiresAssemblyFiles ("Message for --CovariantReturnViaLdftn.Base.GetRequires--")]
-				[RequiresDynamicCode ("Message for --CovariantReturnViaLdftn.Base.GetRequires--")]
 				public abstract BaseReturnType GetRequires ();
 			}
 
@@ -842,7 +767,6 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 			{
 				[RequiresUnreferencedCode ("Message for --CovariantReturnViaLdftn.Derived.GetRequires--")]
 				[RequiresAssemblyFiles ("Message for --CovariantReturnViaLdftn.Derived.GetRequires--")]
-				[RequiresDynamicCode ("Message for --CovariantReturnViaLdftn.Derived.GetRequires--")]
 				public override DerivedReturnType GetRequires ()
 				{
 					return null;
@@ -851,7 +775,6 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 
 			[ExpectedWarning ("IL2026", "--CovariantReturnViaLdftn.Derived.GetRequires--")]
 			[ExpectedWarning ("IL3002", "--CovariantReturnViaLdftn.Derived.GetRequires--", ProducedBy = ProducedBy.Analyzer)]
-			[ExpectedWarning ("IL3050", "--CovariantReturnViaLdftn.Derived.GetRequires--", ProducedBy = ProducedBy.Analyzer)]
 			public static void Test ()
 			{
 				var tmp = new Derived ();
@@ -906,7 +829,6 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 				add { }
 				[RequiresUnreferencedCode ("Message for --EventToTestRemove.remove--")]
 				[RequiresAssemblyFiles ("Message for --EventToTestRemove.remove--")]
-				[RequiresDynamicCode ("Message for --EventToTestRemove.remove--")]
 				remove { }
 			}
 
@@ -914,17 +836,14 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 			static event EventHandler EventToTestAdd {
 				[RequiresUnreferencedCode ("Message for --EventToTestAdd.add--")]
 				[RequiresAssemblyFiles ("Message for --EventToTestAdd.add--")]
-				[RequiresDynamicCode ("Message for --EventToTestAdd.add--")]
 				add { }
 				remove { }
 			}
 
 			[ExpectedWarning ("IL2026", "--EventToTestRemove.remove--")]
 			[ExpectedWarning ("IL3002", "--EventToTestRemove.remove--", ProducedBy = ProducedBy.Analyzer)]
-			[ExpectedWarning ("IL3050", "--EventToTestRemove.remove--", ProducedBy = ProducedBy.Analyzer)]
 			[ExpectedWarning ("IL2026", "--EventToTestAdd.add--")]
 			[ExpectedWarning ("IL3002", "--EventToTestAdd.add--", ProducedBy = ProducedBy.Analyzer)]
-			[ExpectedWarning ("IL3050", "--EventToTestAdd.add--", ProducedBy = ProducedBy.Analyzer)]
 			public static void Test ()
 			{
 				EventToTestRemove -= (sender, e) => { };
@@ -938,7 +857,6 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 			{
 				[RequiresUnreferencedCode ("Message for --NewConstraintTestType.ctor--")]
 				[RequiresAssemblyFiles ("Message for --NewConstraintTestType.ctor--")]
-				[RequiresDynamicCode ("Message for --NewConstraintTestType.ctor--")]
 				public NewConstraintTestType () { }
 			}
 
@@ -946,7 +864,6 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 
 			[ExpectedWarning ("IL2026", "--NewConstraintTestType.ctor--")]
 			[ExpectedWarning ("IL3002", "--NewConstraintTestType.ctor--", ProducedBy = ProducedBy.Analyzer)]
-			[ExpectedWarning ("IL3050", "--NewConstraintTestType.ctor--", ProducedBy = ProducedBy.Analyzer)]
 			public static void Test ()
 			{
 				GenericMethod<NewConstraintTestType> ();
@@ -963,7 +880,6 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 
 			[ExpectedWarning ("IL2026", "--NewConstraintTestType.ctor--")]
 			[ExpectedWarning ("IL3002", "--NewConstraintTestType.ctor--", ProducedBy = ProducedBy.Analyzer)]
-			[ExpectedWarning ("IL3050", "--NewConstraintTestType.ctor--", ProducedBy = ProducedBy.Analyzer)]
 			public static void TestNewConstraintOnTypeParameter ()
 			{
 				_ = new NewConstaintOnTypeParameter<NewConstraintTestType> ();
@@ -971,7 +887,6 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 
 			[ExpectedWarning ("IL2026", "--NewConstraintTestType.ctor--")]
 			[ExpectedWarning ("IL3002", "--NewConstraintTestType.ctor--", ProducedBy = ProducedBy.Analyzer)]
-			[ExpectedWarning ("IL3050", "--NewConstraintTestType.ctor--", ProducedBy = ProducedBy.Analyzer)]
 			public static void TestNewConstraintOnTypeParameterOfStaticType ()
 			{
 				NewConstraintOnTypeParameterOfStaticType<NewConstraintTestType>.DoNothing ();
@@ -983,7 +898,6 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 			static bool PropertyWithLdToken {
 				[RequiresUnreferencedCode ("Message for --PropertyWithLdToken.get--")]
 				[RequiresAssemblyFiles ("Message for --PropertyWithLdToken.get--")]
-				[RequiresDynamicCode ("Message for --PropertyWithLdToken.get--")]
 				get {
 					return false;
 				}
@@ -991,7 +905,6 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 
 			[ExpectedWarning ("IL2026", "--PropertyWithLdToken.get--")]
 			[ExpectedWarning ("IL3002", "--PropertyWithLdToken.get--", ProducedBy = ProducedBy.Analyzer)]
-			[ExpectedWarning ("IL3050", "--PropertyWithLdToken.get--", ProducedBy = ProducedBy.Analyzer)]
 			public static void Test ()
 			{
 				Expression<Func<bool>> getter = () => PropertyWithLdToken;
@@ -1008,7 +921,6 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 			{
 				[RequiresUnreferencedCode ("Message")]
 				[RequiresAssemblyFiles ("Message")]
-				[RequiresDynamicCode ("Message")]
 				public virtual void VirtualMethod ()
 				{
 				}
@@ -1016,21 +928,12 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 				public virtual string VirtualPropertyAnnotationInAccesor {
 					[RequiresUnreferencedCode ("Message")]
 					[RequiresAssemblyFiles ("Message")]
-					[RequiresDynamicCode ("Message")]
 					get;
 					set;
 				}
 
 				[RequiresAssemblyFiles ("Message")]
 				public virtual string VirtualPropertyAnnotationInProperty { get; set; }
-
-				[RequiresAssemblyFiles("Message")]
-				public virtual string VirtualPropertyAnnotationInPropertyAndAccessor { 
-					[RequiresAssemblyFiles("Message")]
-					[RequiresUnreferencedCode("Message")]
-					get; 
-					set; 
-				}
 			}
 
 			class BaseClassWithoutRequires
@@ -1048,10 +951,8 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 			{
 				[RequiresUnreferencedCode ("Message")]
 				[RequiresAssemblyFiles ("Message")]
-				[RequiresDynamicCode ("Message")]
 				[ExpectedWarning ("IL2046", "DerivedClassWithRequires.VirtualMethod()", "BaseClassWithoutRequires.VirtualMethod()")]
 				[ExpectedWarning ("IL3003", "DerivedClassWithRequires.VirtualMethod()", "BaseClassWithoutRequires.VirtualMethod()", ProducedBy = ProducedBy.Analyzer)]
-				[ExpectedWarning ("IL3051", "DerivedClassWithRequires.VirtualMethod()", "BaseClassWithoutRequires.VirtualMethod()", ProducedBy = ProducedBy.Analyzer)]
 				public override void VirtualMethod ()
 				{
 				}
@@ -1060,10 +961,8 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 				public override string VirtualPropertyAnnotationInAccesor {
 					[ExpectedWarning ("IL2046", "DerivedClassWithRequires.VirtualPropertyAnnotationInAccesor.get", "BaseClassWithoutRequires.VirtualPropertyAnnotationInAccesor.get")]
 					[ExpectedWarning ("IL3003", "DerivedClassWithRequires.VirtualPropertyAnnotationInAccesor.get", "BaseClassWithoutRequires.VirtualPropertyAnnotationInAccesor.get", ProducedBy = ProducedBy.Analyzer)]
-					[ExpectedWarning ("IL3051", "DerivedClassWithRequires.VirtualPropertyAnnotationInAccesor.get", "BaseClassWithoutRequires.VirtualPropertyAnnotationInAccesor.get", ProducedBy = ProducedBy.Analyzer)]
 					[RequiresUnreferencedCode ("Message")]
 					[RequiresAssemblyFiles ("Message")]
-					[RequiresDynamicCode ("Message")]
 					get { return name; }
 					set { name = value; }
 				}
@@ -1077,7 +976,6 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 			{
 				[ExpectedWarning ("IL2046", "DerivedClassWithoutRequires.VirtualMethod()", "BaseClassWithRequires.VirtualMethod()")]
 				[ExpectedWarning ("IL3003", "DerivedClassWithoutRequires.VirtualMethod()", "BaseClassWithRequires.VirtualMethod()", ProducedBy = ProducedBy.Analyzer)]
-				[ExpectedWarning ("IL3051", "DerivedClassWithoutRequires.VirtualMethod()", "BaseClassWithRequires.VirtualMethod()", ProducedBy = ProducedBy.Analyzer)]
 				public override void VirtualMethod ()
 				{
 				}
@@ -1086,99 +984,29 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 				public override string VirtualPropertyAnnotationInAccesor {
 					[ExpectedWarning ("IL2046", "DerivedClassWithoutRequires.VirtualPropertyAnnotationInAccesor.get", "BaseClassWithRequires.VirtualPropertyAnnotationInAccesor.get")]
 					[ExpectedWarning ("IL3003", "DerivedClassWithoutRequires.VirtualPropertyAnnotationInAccesor.get", "BaseClassWithRequires.VirtualPropertyAnnotationInAccesor.get", ProducedBy = ProducedBy.Analyzer)]
-					[ExpectedWarning ("IL3051", "DerivedClassWithoutRequires.VirtualPropertyAnnotationInAccesor.get", "BaseClassWithRequires.VirtualPropertyAnnotationInAccesor.get", ProducedBy = ProducedBy.Analyzer)]
 					get { return name; }
 					set { name = value; }
 				}
 
 				[ExpectedWarning ("IL3003", "DerivedClassWithoutRequires.VirtualPropertyAnnotationInProperty", "BaseClassWithRequires.VirtualPropertyAnnotationInProperty", ProducedBy = ProducedBy.Analyzer)]
 				public override string VirtualPropertyAnnotationInProperty { get; set; }
-
-				[ExpectedWarning ("IL3003", "DerivedClassWithoutRequires.VirtualPropertyAnnotationInPropertyAndAccessor", "BaseClassWithRequires.VirtualPropertyAnnotationInPropertyAndAccessor", ProducedBy = ProducedBy.Analyzer)]
-
-				public override string VirtualPropertyAnnotationInPropertyAndAccessor {
-					[ExpectedWarning ("IL2046", "VirtualPropertyAnnotationInPropertyAndAccessor.get", "BaseClassWithRequires.VirtualPropertyAnnotationInPropertyAndAccessor.get")]
-					[ExpectedWarning ("IL3003", "DerivedClassWithoutRequires.VirtualPropertyAnnotationInPropertyAndAccessor.get", "BaseClassWithRequires.VirtualPropertyAnnotationInPropertyAndAccessor.get", ProducedBy = ProducedBy.Analyzer)]
-					get;
-					set;
-				}
-			}
-
-			class DerivedClassWithAllWarnings : BaseClassWithRequires
-			{
-				[ExpectedWarning ("IL2046", "DerivedClassWithAllWarnings.VirtualMethod()", "BaseClassWithRequires.VirtualMethod()")]
-				[ExpectedWarning ("IL3003", "DerivedClassWithAllWarnings.VirtualMethod()", "BaseClassWithRequires.VirtualMethod()", ProducedBy = ProducedBy.Analyzer)]
-				[ExpectedWarning ("IL3051", "DerivedClassWithAllWarnings.VirtualMethod()", "BaseClassWithRequires.VirtualMethod()", ProducedBy = ProducedBy.Analyzer)]
-				public override void VirtualMethod ()
-				{
-				}
-
-				private string name;
-
-				[RequiresAssemblyFiles("Message")]
-				[ExpectedWarning ("IL3003", "DerivedClassWithAllWarnings.VirtualPropertyAnnotationInAccesor", "BaseClassWithRequires.VirtualPropertyAnnotationInAccesor", ProducedBy = ProducedBy.Analyzer)]
-				public override string VirtualPropertyAnnotationInAccesor {
-					[ExpectedWarning ("IL2046", "DerivedClassWithAllWarnings.VirtualPropertyAnnotationInAccesor.get", "BaseClassWithRequires.VirtualPropertyAnnotationInAccesor.get")]
-					[ExpectedWarning ("IL3003", "DerivedClassWithAllWarnings.VirtualPropertyAnnotationInAccesor.get", "BaseClassWithRequires.VirtualPropertyAnnotationInAccesor.get", ProducedBy = ProducedBy.Analyzer)]
-					[ExpectedWarning ("IL3051", "DerivedClassWithAllWarnings.VirtualPropertyAnnotationInAccesor.get", "BaseClassWithRequires.VirtualPropertyAnnotationInAccesor.get", ProducedBy = ProducedBy.Analyzer)]
-					get { return name; }
-					[RequiresAssemblyFiles ("Message")]
-					[RequiresUnreferencedCode("Message")]
-					[ExpectedWarning ("IL2046", "VirtualPropertyAnnotationInAccesor.set", "BaseClassWithRequires.VirtualPropertyAnnotationInAccesor.set")]
-					[ExpectedWarning ("IL3003", "DerivedClassWithAllWarnings.VirtualPropertyAnnotationInAccesor.set", "BaseClassWithRequires.VirtualPropertyAnnotationInAccesor.set", ProducedBy = ProducedBy.Analyzer)]
-					set { name = value; }
-				}
-
-				[ExpectedWarning ("IL3003", "DerivedClassWithAllWarnings.VirtualPropertyAnnotationInProperty", "BaseClassWithRequires.VirtualPropertyAnnotationInProperty", ProducedBy = ProducedBy.Analyzer)]
-				public override string VirtualPropertyAnnotationInProperty {
-					[RequiresAssemblyFiles ("Message")]
-					[RequiresUnreferencedCode ("Message")]
-					[ExpectedWarning ("IL2046", "VirtualPropertyAnnotationInProperty.get", "BaseClassWithRequires.VirtualPropertyAnnotationInProperty.get")]
-					[ExpectedWarning ("IL3003", "DerivedClassWithAllWarnings.VirtualPropertyAnnotationInProperty.get", "BaseClassWithRequires.VirtualPropertyAnnotationInProperty.get", ProducedBy = ProducedBy.Analyzer)]
-					get;
-					[RequiresAssemblyFiles ("Message")]
-					[RequiresUnreferencedCode ("Message")]
-					[ExpectedWarning ("IL2046", "VirtualPropertyAnnotationInProperty.set", "BaseClassWithRequires.VirtualPropertyAnnotationInProperty.set")]
-					[ExpectedWarning ("IL3003", "DerivedClassWithAllWarnings.VirtualPropertyAnnotationInProperty.set", "BaseClassWithRequires.VirtualPropertyAnnotationInProperty.set", ProducedBy = ProducedBy.Analyzer)]
-					set; }
-
-				[ExpectedWarning ("IL3003", "DerivedClassWithAllWarnings.VirtualPropertyAnnotationInPropertyAndAccessor", "BaseClassWithRequires.VirtualPropertyAnnotationInPropertyAndAccessor", ProducedBy = ProducedBy.Analyzer)]
-				public override string VirtualPropertyAnnotationInPropertyAndAccessor {
-					[ExpectedWarning ("IL2046", "VirtualPropertyAnnotationInPropertyAndAccessor.get", "BaseClassWithRequires.VirtualPropertyAnnotationInPropertyAndAccessor.get")]
-					[ExpectedWarning ("IL3003", "DerivedClassWithAllWarnings.VirtualPropertyAnnotationInPropertyAndAccessor.get", "BaseClassWithRequires.VirtualPropertyAnnotationInPropertyAndAccessor.get", ProducedBy = ProducedBy.Analyzer)]
-					get;
-					[RequiresAssemblyFiles ("Message")]
-					[RequiresUnreferencedCode ("Message")]
-					[ExpectedWarning ("IL2046", "VirtualPropertyAnnotationInPropertyAndAccessor.set", "BaseClassWithRequires.VirtualPropertyAnnotationInPropertyAndAccessor.set")]
-					[ExpectedWarning ("IL3003", "DerivedClassWithAllWarnings.VirtualPropertyAnnotationInPropertyAndAccessor.set", "BaseClassWithRequires.VirtualPropertyAnnotationInPropertyAndAccessor.set", ProducedBy = ProducedBy.Analyzer)]
-					set;
-				}
 			}
 
 			public interface IBaseWithRequires
 			{
 				[RequiresUnreferencedCode ("Message")]
 				[RequiresAssemblyFiles ("Message")]
-				[RequiresDynamicCode ("Message")]
 				void Method ();
 
 				string PropertyAnnotationInAccesor {
 					[RequiresUnreferencedCode ("Message")]
 					[RequiresAssemblyFiles ("Message")]
-					[RequiresDynamicCode ("Message")]
 					get;
 					set;
 				}
 
 				[RequiresAssemblyFiles ("Message")]
 				string PropertyAnnotationInProperty { get; set; }
-
-				[RequiresAssemblyFiles ("Message")]
-				string PropertyAnnotationInPropertyAndAccessor { 
-					get;
-					[RequiresUnreferencedCode ("Message")]
-					[RequiresAssemblyFiles ("Message")]
-					set; }
 			}
 
 			public interface IBaseWithoutRequires
@@ -1188,18 +1016,14 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 				string PropertyAnnotationInAccesor { get; set; }
 
 				string PropertyAnnotationInProperty { get; set; }
-
-				string PropertyAnnotationInPropertyAndAccessor { get; set; }
 			}
 
 			class ImplementationClassWithRequires : IBaseWithoutRequires
 			{
 				[RequiresUnreferencedCode ("Message")]
 				[RequiresAssemblyFiles ("Message")]
-				[RequiresDynamicCode ("Message")]
 				[ExpectedWarning ("IL2046", "ImplementationClassWithRequires.Method()", "IBaseWithoutRequires.Method()")]
 				[ExpectedWarning ("IL3003", "ImplementationClassWithRequires.Method()", "IBaseWithoutRequires.Method()", ProducedBy = ProducedBy.Analyzer)]
-				[ExpectedWarning ("IL3051", "ImplementationClassWithRequires.Method()", "IBaseWithoutRequires.Method()", ProducedBy = ProducedBy.Analyzer)]
 				public void Method ()
 				{
 				}
@@ -1208,10 +1032,8 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 				public string PropertyAnnotationInAccesor {
 					[ExpectedWarning ("IL2046", "ImplementationClassWithRequires.PropertyAnnotationInAccesor.get", "IBaseWithoutRequires.PropertyAnnotationInAccesor.get")]
 					[ExpectedWarning ("IL3003", "ImplementationClassWithRequires.PropertyAnnotationInAccesor.get", "IBaseWithoutRequires.PropertyAnnotationInAccesor.get", ProducedBy = ProducedBy.Analyzer)]
-					[ExpectedWarning ("IL3051", "ImplementationClassWithRequires.PropertyAnnotationInAccesor.get", "IBaseWithoutRequires.PropertyAnnotationInAccesor.get", ProducedBy = ProducedBy.Analyzer)]
 					[RequiresUnreferencedCode ("Message")]
 					[RequiresAssemblyFiles ("Message")]
-					[RequiresDynamicCode ("Message")]
 					get { return name; }
 					set { name = value; }
 				}
@@ -1219,26 +1041,14 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 				[RequiresAssemblyFiles ("Message")]
 				[ExpectedWarning ("IL3003", "ImplementationClassWithRequires.PropertyAnnotationInProperty", "IBaseWithoutRequires.PropertyAnnotationInProperty", ProducedBy = ProducedBy.Analyzer)]
 				public string PropertyAnnotationInProperty { get; set; }
-
-				[RequiresAssemblyFiles ("Message")]
-				[ExpectedWarning ("IL3003", "ImplementationClassWithRequires.PropertyAnnotationInPropertyAndAccessor", "IBaseWithoutRequires.PropertyAnnotationInPropertyAndAccessor", ProducedBy = ProducedBy.Analyzer)]
-				public string PropertyAnnotationInPropertyAndAccessor {
-					[RequiresAssemblyFiles ("Message")]
-					[RequiresUnreferencedCode("Message")]
-					[ExpectedWarning ("IL2046", "ImplementationClassWithRequires.PropertyAnnotationInPropertyAndAccessor.get", "IBaseWithoutRequires.PropertyAnnotationInPropertyAndAccessor.get")]
-					[ExpectedWarning ("IL3003", "ImplementationClassWithRequires.PropertyAnnotationInPropertyAndAccessor.get", "IBaseWithoutRequires.PropertyAnnotationInPropertyAndAccessor.get", ProducedBy = ProducedBy.Analyzer)]
-					get; 
-					set; }
 			}
 
 			class ExplicitImplementationClassWithRequires : IBaseWithoutRequires
 			{
 				[RequiresUnreferencedCode ("Message")]
 				[RequiresAssemblyFiles ("Message")]
-				[RequiresDynamicCode ("Message")]
 				[ExpectedWarning ("IL2046", "ExplicitImplementationClassWithRequires.Mono.Linker.Tests.Cases.RequiresCapability.RequiresCapability.AttributeMismatch.IBaseWithoutRequires.Method()", "IBaseWithoutRequires.Method()")]
 				[ExpectedWarning ("IL3003", "ExplicitImplementationClassWithRequires.Mono.Linker.Tests.Cases.RequiresCapability.RequiresCapability.AttributeMismatch.IBaseWithoutRequires.Method()", "IBaseWithoutRequires.Method()", ProducedBy = ProducedBy.Analyzer)]
-				[ExpectedWarning ("IL3051", "ExplicitImplementationClassWithRequires.Mono.Linker.Tests.Cases.RequiresCapability.RequiresCapability.AttributeMismatch.IBaseWithoutRequires.Method()", "IBaseWithoutRequires.Method()", ProducedBy = ProducedBy.Analyzer)]
 				void IBaseWithoutRequires.Method ()
 				{
 				}
@@ -1247,10 +1057,8 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 				string IBaseWithoutRequires.PropertyAnnotationInAccesor {
 					[ExpectedWarning ("IL2046", "PropertyAnnotationInAccesor.get", "IBaseWithoutRequires.PropertyAnnotationInAccesor.get")]
 					[ExpectedWarning ("IL3003", "PropertyAnnotationInAccesor.get", "IBaseWithoutRequires.PropertyAnnotationInAccesor.get", ProducedBy = ProducedBy.Analyzer)]
-					[ExpectedWarning ("IL3051", "PropertyAnnotationInAccesor.get", "IBaseWithoutRequires.PropertyAnnotationInAccesor.get", ProducedBy = ProducedBy.Analyzer)]
 					[RequiresUnreferencedCode ("Message")]
 					[RequiresAssemblyFiles ("Message")]
-					[RequiresDynamicCode ("Message")]
 					get { return name; }
 					set { name = value; }
 				}
@@ -1258,24 +1066,12 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 				[RequiresAssemblyFiles ("Message")]
 				[ExpectedWarning ("IL3003", "ExplicitImplementationClassWithRequires.Mono.Linker.Tests.Cases.RequiresCapability.RequiresCapability.AttributeMismatch.IBaseWithoutRequires.PropertyAnnotationInProperty", "IBaseWithoutRequires.PropertyAnnotationInProperty", ProducedBy = ProducedBy.Analyzer)]
 				string IBaseWithoutRequires.PropertyAnnotationInProperty { get; set; }
-
-				[RequiresAssemblyFiles ("Message")]
-				[ExpectedWarning ("IL3003", "PropertyAnnotationInPropertyAndAccessor", "IBaseWithoutRequires.PropertyAnnotationInPropertyAndAccessor", ProducedBy = ProducedBy.Analyzer)]
-				string IBaseWithoutRequires.PropertyAnnotationInPropertyAndAccessor {
-					[RequiresAssemblyFiles ("Message")]
-					[RequiresUnreferencedCode("Message")]
-					[ExpectedWarning ("IL2046", "PropertyAnnotationInPropertyAndAccessor.get", "IBaseWithoutRequires.PropertyAnnotationInPropertyAndAccessor.get")]
-					[ExpectedWarning ("IL3003", "PropertyAnnotationInPropertyAndAccessor.get", "IBaseWithoutRequires.PropertyAnnotationInPropertyAndAccessor.get", ProducedBy = ProducedBy.Analyzer)]
-					get;
-					set;
-				}
 			}
 
 			class ImplementationClassWithoutRequires : IBaseWithRequires
 			{
 				[ExpectedWarning ("IL2046", "ImplementationClassWithoutRequires.Method()", "IBaseWithRequires.Method()")]
 				[ExpectedWarning ("IL3003", "ImplementationClassWithoutRequires.Method()", "IBaseWithRequires.Method()", ProducedBy = ProducedBy.Analyzer)]
-				[ExpectedWarning ("IL3051", "ImplementationClassWithoutRequires.Method()", "IBaseWithRequires.Method()", ProducedBy = ProducedBy.Analyzer)]
 				public void Method ()
 				{
 				}
@@ -1284,32 +1080,18 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 				public string PropertyAnnotationInAccesor {
 					[ExpectedWarning ("IL2046", "ImplementationClassWithoutRequires.PropertyAnnotationInAccesor.get", "IBaseWithRequires.PropertyAnnotationInAccesor.get")]
 					[ExpectedWarning ("IL3003", "ImplementationClassWithoutRequires.PropertyAnnotationInAccesor.get", "IBaseWithRequires.PropertyAnnotationInAccesor.get", ProducedBy = ProducedBy.Analyzer)]
-					[ExpectedWarning ("IL3051", "ImplementationClassWithoutRequires.PropertyAnnotationInAccesor.get", "IBaseWithRequires.PropertyAnnotationInAccesor.get", ProducedBy = ProducedBy.Analyzer)]
 					get { return name; }
 					set { name = value; }
 				}
 
 				[ExpectedWarning ("IL3003", "ImplementationClassWithoutRequires.PropertyAnnotationInProperty", "IBaseWithRequires.PropertyAnnotationInProperty", ProducedBy = ProducedBy.Analyzer)]
 				public string PropertyAnnotationInProperty { get; set; }
-
-				[ExpectedWarning ("IL3003", "ImplementationClassWithoutRequires.PropertyAnnotationInPropertyAndAccessor", "IBaseWithRequires.PropertyAnnotationInPropertyAndAccessor", ProducedBy = ProducedBy.Analyzer)]
-				public string PropertyAnnotationInPropertyAndAccessor {
-					[RequiresAssemblyFiles("Message")]
-					[RequiresUnreferencedCode("Message")]
-					[ExpectedWarning ("IL2046", "ImplementationClassWithoutRequires.PropertyAnnotationInPropertyAndAccessor.get", "IBaseWithRequires.PropertyAnnotationInPropertyAndAccessor.get")]
-					[ExpectedWarning ("IL3003", "ImplementationClassWithoutRequires.PropertyAnnotationInPropertyAndAccessor.get", "IBaseWithRequires.PropertyAnnotationInPropertyAndAccessor.get", ProducedBy = ProducedBy.Analyzer)]
-					get;
-					[ExpectedWarning ("IL2046", "ImplementationClassWithoutRequires.PropertyAnnotationInPropertyAndAccessor.set", "IBaseWithRequires.PropertyAnnotationInPropertyAndAccessor.set")]
-					[ExpectedWarning ("IL3003", "ImplementationClassWithoutRequires.PropertyAnnotationInPropertyAndAccessor.set", "IBaseWithRequires.PropertyAnnotationInPropertyAndAccessor.set", ProducedBy = ProducedBy.Analyzer)]
-					set;
-				}
 			}
 
 			class ExplicitImplementationClassWithoutRequires : IBaseWithRequires
 			{
 				[ExpectedWarning ("IL2046", "IBaseWithRequires.Method()", "ExplicitImplementationClassWithoutRequires.Mono.Linker.Tests.Cases.RequiresCapability.RequiresCapability.AttributeMismatch.IBaseWithRequires.Method()")]
 				[ExpectedWarning ("IL3003", "IBaseWithRequires.Method()", "ExplicitImplementationClassWithoutRequires.Mono.Linker.Tests.Cases.RequiresCapability.RequiresCapability.AttributeMismatch.IBaseWithRequires.Method()", ProducedBy = ProducedBy.Analyzer)]
-				[ExpectedWarning ("IL3051", "IBaseWithRequires.Method()", "ExplicitImplementationClassWithoutRequires.Mono.Linker.Tests.Cases.RequiresCapability.RequiresCapability.AttributeMismatch.IBaseWithRequires.Method()", ProducedBy = ProducedBy.Analyzer)]
 				void IBaseWithRequires.Method ()
 				{
 				}
@@ -1318,28 +1100,18 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 				string IBaseWithRequires.PropertyAnnotationInAccesor {
 					[ExpectedWarning ("IL2046", "PropertyAnnotationInAccesor.get", "IBaseWithRequires.PropertyAnnotationInAccesor.get")]
 					[ExpectedWarning ("IL3003", "PropertyAnnotationInAccesor.get", "IBaseWithRequires.PropertyAnnotationInAccesor.get", ProducedBy = ProducedBy.Analyzer)]
-					[ExpectedWarning ("IL3051", "PropertyAnnotationInAccesor.get", "IBaseWithRequires.PropertyAnnotationInAccesor.get", ProducedBy = ProducedBy.Analyzer)]
 					get { return name; }
 					set { name = value; }
 				}
 
 				[ExpectedWarning ("IL3003", "ExplicitImplementationClassWithoutRequires.Mono.Linker.Tests.Cases.RequiresCapability.RequiresCapability.AttributeMismatch.IBaseWithRequires.PropertyAnnotationInProperty", "IBaseWithRequires.PropertyAnnotationInProperty", ProducedBy = ProducedBy.Analyzer)]
 				string IBaseWithRequires.PropertyAnnotationInProperty { get; set; }
-
-				[ExpectedWarning ("IL3003", "ExplicitImplementationClassWithoutRequires.Mono.Linker.Tests.Cases.RequiresCapability.RequiresCapability.AttributeMismatch.IBaseWithRequires.PropertyAnnotationInPropertyAndAccessor", "IBaseWithRequires.PropertyAnnotationInPropertyAndAccessor", ProducedBy = ProducedBy.Analyzer)]
-				string IBaseWithRequires.PropertyAnnotationInPropertyAndAccessor {
-					get;
-					[ExpectedWarning ("IL2046", "PropertyAnnotationInPropertyAndAccessor.set", "IBaseWithRequires.PropertyAnnotationInPropertyAndAccessor.set")]
-					[ExpectedWarning ("IL3003", "PropertyAnnotationInPropertyAndAccessor.set", "IBaseWithRequires.PropertyAnnotationInPropertyAndAccessor.set", ProducedBy = ProducedBy.Analyzer)]
-					set;
-				}
 			}
 
 			class ImplementationClassWithoutRequiresInSource : ReferenceInterfaces.IBaseWithRequiresInReference
 			{
 				[ExpectedWarning ("IL2046", "ImplementationClassWithoutRequiresInSource.Method()", "IBaseWithRequiresInReference.Method()")]
 				[ExpectedWarning ("IL3003", "ImplementationClassWithoutRequiresInSource.Method()", "IBaseWithRequiresInReference.Method()", ProducedBy = ProducedBy.Analyzer)]
-				[ExpectedWarning ("IL3051", "ImplementationClassWithoutRequiresInSource.Method()", "IBaseWithRequiresInReference.Method()", ProducedBy = ProducedBy.Analyzer)]
 				public void Method ()
 				{
 				}
@@ -1348,7 +1120,6 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 				public string PropertyAnnotationInAccesor {
 					[ExpectedWarning ("IL2046", "ImplementationClassWithoutRequiresInSource.PropertyAnnotationInAccesor.get", "IBaseWithRequiresInReference.PropertyAnnotationInAccesor.get")]
 					[ExpectedWarning ("IL3003", "ImplementationClassWithoutRequiresInSource.PropertyAnnotationInAccesor.get", "IBaseWithRequiresInReference.PropertyAnnotationInAccesor.get", ProducedBy = ProducedBy.Analyzer)]
-					[ExpectedWarning ("IL3051", "ImplementationClassWithoutRequiresInSource.PropertyAnnotationInAccesor.get", "IBaseWithRequiresInReference.PropertyAnnotationInAccesor.get", ProducedBy = ProducedBy.Analyzer)]
 					get { return name; }
 					set { name = value; }
 				}
@@ -1361,10 +1132,8 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 			{
 				[ExpectedWarning ("IL2046", "ImplementationClassWithRequiresInSource.Method()", "IBaseWithoutRequiresInReference.Method()")]
 				[ExpectedWarning ("IL3003", "ImplementationClassWithRequiresInSource.Method()", "IBaseWithoutRequiresInReference.Method()", ProducedBy = ProducedBy.Analyzer)]
-				[ExpectedWarning ("IL3051", "ImplementationClassWithRequiresInSource.Method()", "IBaseWithoutRequiresInReference.Method()", ProducedBy = ProducedBy.Analyzer)]
 				[RequiresUnreferencedCode ("Message")]
 				[RequiresAssemblyFiles ("Message")]
-				[RequiresDynamicCode ("Message")]
 				public void Method ()
 				{
 				}
@@ -1373,10 +1142,8 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 				public string PropertyAnnotationInAccesor {
 					[ExpectedWarning ("IL2046", "ImplementationClassWithRequiresInSource.PropertyAnnotationInAccesor.get", "IBaseWithoutRequiresInReference.PropertyAnnotationInAccesor.get")]
 					[ExpectedWarning ("IL3003", "ImplementationClassWithRequiresInSource.PropertyAnnotationInAccesor.get", "IBaseWithoutRequiresInReference.PropertyAnnotationInAccesor.get", ProducedBy = ProducedBy.Analyzer)]
-					[ExpectedWarning ("IL3051", "ImplementationClassWithRequiresInSource.PropertyAnnotationInAccesor.get", "IBaseWithoutRequiresInReference.PropertyAnnotationInAccesor.get", ProducedBy = ProducedBy.Analyzer)]
 					[RequiresUnreferencedCode ("Message")]
 					[RequiresAssemblyFiles ("Message")]
-					[RequiresDynamicCode ("Message")]
 					get { return name; }
 					set { name = value; }
 				}
@@ -1390,16 +1157,12 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 			[ExpectedWarning ("IL2026", "BaseClassWithRequires.VirtualMethod()", ProducedBy = ProducedBy.Trimmer)]
 			[ExpectedWarning ("IL2026", "IBaseWithRequires.PropertyAnnotationInAccesor.get", ProducedBy = ProducedBy.Trimmer)]
 			[ExpectedWarning ("IL2026", "IBaseWithRequires.Method()", ProducedBy = ProducedBy.Trimmer)]
-			[ExpectedWarning ("IL2026", "VirtualPropertyAnnotationInPropertyAndAccessor.get", ProducedBy = ProducedBy.Trimmer)]
-			[ExpectedWarning ("IL2026", "PropertyAnnotationInPropertyAndAccessor.set", ProducedBy = ProducedBy.Trimmer)]
-
 			public static void Test ()
 			{
 				RequirePublicMethods (typeof (BaseClassWithRequires));
 				RequirePublicMethods (typeof (BaseClassWithoutRequires));
 				RequirePublicMethods (typeof (DerivedClassWithRequires));
 				RequirePublicMethods (typeof (DerivedClassWithoutRequires));
-				RequirePublicMethods (typeof (DerivedClassWithAllWarnings));
 				RequirePublicMethods (typeof (IBaseWithRequires));
 				RequirePublicMethods (typeof (IBaseWithoutRequires));
 				RequirePublicMethods (typeof (ImplementationClassWithRequires));
@@ -1653,7 +1416,7 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 			class DerivedWithRequiresOnType : BaseWithoutRequiresOnType
 			{
 				// Bug https://github.com/dotnet/linker/issues/2379
-				//[ExpectedWarning ("IL2046", ProducedBy = ProducedBy.Analyzer)]
+				[ExpectedWarning ("IL2046", ProducedBy = ProducedBy.Analyzer)]
 				public override void Method () { }
 			}
 
@@ -1690,7 +1453,7 @@ namespace Mono.Linker.Tests.Cases.RequiresCapability
 				}
 
 				// Bug https://github.com/dotnet/linker/issues/2379
-				//[ExpectedWarning ("IL2046", ProducedBy = ProducedBy.Analyzer)]
+				[ExpectedWarning ("IL2046", ProducedBy = ProducedBy.Analyzer)]
 				public int Method (int a)
 				{
 					return a;
