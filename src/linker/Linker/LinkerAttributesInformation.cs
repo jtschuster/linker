@@ -12,22 +12,23 @@ namespace Mono.Linker
 {
 	readonly struct LinkerAttributesInformation
 	{
-		readonly List<(Type Type, List<Attribute> Attributes)>? _linkerAttributes;
+		using TypeAttributesPair = (Type Type, List<Attribute> Attributes);
+		readonly List<TypeAttributesPair>? _linkerAttributes;
 
-		private LinkerAttributesInformation (List<(Type Type, List<Attribute> Attributes)>? cache)
+		private LinkerAttributesInformation (List<TypeAttributesPair>? cache)
 		{
 			this._linkerAttributes = cache;
 		}
 
-		private static bool TryFindAttributeList (List<(Type Type, List<Attribute> Attributes)> list, Type type, [NotNullWhen (returnValue: true)] out List<Attribute>? foundAttributes)
+		private static bool TryFindAttributeList (List<TypeAttributesPair> list, Type type, [NotNullWhen (returnValue: true)] out List<Attribute>? foundAttributes)
 		{
-			foundAttributes = null;
 			foreach (var item in list) {
 				if (item.Type == type) {
 					foundAttributes = item.Attributes;
 					return true;
 				}
 			}
+			foundAttributes = null;
 			return false;
 		}
 
@@ -35,7 +36,7 @@ namespace Mono.Linker
 		{
 			Debug.Assert (context.CustomAttributes.HasAny (provider));
 
-			List<(Type Type, List<Attribute> Attributes)>? cache = null;
+			List<TypeAttributesPair>? cache = null;
 
 			foreach (var customAttribute in context.CustomAttributes.GetCustomAttributes (provider)) {
 				var attributeType = customAttribute.AttributeType;
@@ -66,7 +67,7 @@ namespace Mono.Linker
 					continue;
 
 				if (cache == null)
-					cache = new List<(Type Type, List<Attribute> Attributes)> ();
+					cache = new List<TypeAttributesPair> ();
 
 				Type attributeValueType = attributeValue.GetType ();
 
