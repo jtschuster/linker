@@ -24,6 +24,8 @@ namespace ILLink.RoslynAnalyzer
 		static readonly DiagnosticDescriptor s_makeGenericMethodRule = DiagnosticDescriptors.GetDiagnosticDescriptor (DiagnosticId.MakeGenericMethod);
 		static readonly DiagnosticDescriptor s_requiresUnreferencedCodeOnStaticCtor = DiagnosticDescriptors.GetDiagnosticDescriptor (DiagnosticId.RequiresUnreferencedCodeOnStaticConstructor);
 
+		static readonly DiagnosticDescriptor s_typeDerivesFromRucClassRule = DiagnosticDescriptors.GetDiagnosticDescriptor (DiagnosticId.RequiresOnBaseClass);
+
 		static readonly Action<OperationAnalysisContext> s_dynamicTypeInvocation = operationContext => {
 			if (FindContainingSymbol (operationContext, DiagnosticTargets.All) is ISymbol containingSymbol &&
 				containingSymbol.HasAttribute (RequiresUnreferencedCodeAttribute))
@@ -32,6 +34,24 @@ namespace ILLink.RoslynAnalyzer
 			operationContext.ReportDiagnostic (Diagnostic.Create (s_dynamicTypeInvocationRule,
 				operationContext.Operation.Syntax.GetLocation ()));
 		};
+
+		private Action<SymbolAnalysisContext> typeDerivesFromRucBase {
+			get {
+				return symbolAnalysisContext => {
+					if (symbolAnalysisContext.Symbol is INamedTypeSymbol typeSymbol && !typeSymbol.HasAttribute (RequiresUnreferencedCodeAttribute)
+						&& typeSymbol.BaseType is INamedTypeSymbol baseType
+						&& baseType.TryGetAttribute (RequiresUnreferencedCodeAttribute, out var requiresUnreferencedCodeAttribute)) {
+						var diag = Diagnostic.Create (s_typeDerivesFromRucClassRule,
+							typeSymbol.Locations[0],
+							typeSymbol,
+							baseType.GetDisplayName (),
+							GetMessageFromAttribute (requiresUnreferencedCodeAttribute),
+							GetUrlFromAttribute (requiresUnreferencedCodeAttribute));
+						symbolAnalysisContext.ReportDiagnostic (diag);
+					}
+				};
+			}
+		}
 
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics =>
 			ImmutableArray.Create (s_dynamicTypeInvocationRule, s_makeGenericMethodRule, s_makeGenericTypeRule, s_requiresUnreferencedCodeRule, s_requiresUnreferencedCodeAttributeMismatch, s_requiresUnreferencedCodeOnStaticCtor);
@@ -79,12 +99,16 @@ namespace ILLink.RoslynAnalyzer
 
 			return false;
 		}
+		private protected override ImmutableArray<(Action<SymbolAnalysisContext> Action, SymbolKind[] SymbolKind)> ExtraSymbolActions =>
+			ImmutableArray.Create<(Action<SymbolAnalysisContext> Action, SymbolKind[] SymbolKind)> ((typeDerivesFromRucBase, new SymbolKind[] { SymbolKind.NamedType }));
+
+
 
 		private protected override ImmutableArray<(Action<OperationAnalysisContext> Action, OperationKind[] OperationKind)> ExtraOperationActions =>
 				ImmutableArray.Create ((s_dynamicTypeInvocation, new OperationKind[] { OperationKind.DynamicInvocation }));
 
 		protected override bool VerifyAttributeArguments (AttributeData attribute) =>
-			attribute.ConstructorArguments.Length >= 1 && attribute.ConstructorArguments[0] is { Type: { SpecialType: SpecialType.System_String } } ctorArg;
+			RequiresUnreferencedCodeUtils.VerifyRequiresUnreferencedCodeAttributeArguments (attribute);
 
 		protected override string GetMessageFromAttribute (AttributeData? requiresAttribute)
 		{
