@@ -21,20 +21,9 @@ using System.Reflection.Metadata;
 
 namespace ILLink.RoslynAnalyzer
 {
-	class XmlAttributeParser
+	class AnalyzerXmlAttributeParser : XmlProcessorBase
 	{
-		private XPathNavigator _document;
-		const string FullNameAttributeName = "fullname";
-		const string LinkerElementName = "linker";
-		const string TypeElementName = "type";
-		const string SignatureAttributeName = "signature";
-		const string NameAttributeName = "name";
-		const string FieldElementName = "field";
-		const string MethodElementName = "method";
-		const string EventElementName = "event";
-		const string PropertyElementName = "property";
-		const string AllAssembliesFullName = "*";
-		protected const string XmlNamespace = "";
+		AnalyzerXmlAttributeParser (string xmlDocumentLocation, Stream documentStream) : base (xmlDocumentLocation, documentStream) { }
 		private AdditionalText? findFile (CompilationStartAnalysisContext compilationStartContext)
 		{
 			// Find the file with the invalid terms.
@@ -74,21 +63,21 @@ namespace ILLink.RoslynAnalyzer
 				if (!nav.MoveToChild (LinkerElementName, XmlNamespace))
 					return;
 
-				if (_resource != null) {
-					if (stripResource)
-						_context.Annotations.AddResourceToRemove (_resource.Value.Assembly, _resource.Value.Resource);
-					if (ignoreResource)
-						return;
-				}
+				//if (_resource != null) {
+				//	if (stripResource)
+				//		_context.Annotations.AddResourceToRemove (_resource.Value.Assembly, _resource.Value.Resource);
+				//	if (ignoreResource)
+				//		return;
+				//}
 
 				if (!ShouldProcessElement (nav))
 					return;
 
 				ProcessAssemblies (nav);
 
-				// For embedded XML, allow not specifying the assembly explicitly in XML.
-				if (_resource != null)
-					ProcessAssembly (_resource.Value.Assembly, nav, warnOnUnresolvedTypes: true);
+				//// For embedded XML, allow not specifying the assembly explicitly in XML.
+				//if (_resource != null)
+				//	ProcessAssembly (_resource.Value.Assembly, nav, warnOnUnresolvedTypes: true);
 
 			} catch (Exception ex) when (!(ex is LinkerFatalErrorException)) {
 				throw new LinkerFatalErrorException (MessageContainer.CreateErrorMessage (null, DiagnosticId.ErrorProcessingXmlLocation, _xmlDocumentLocation), ex);
@@ -231,7 +220,10 @@ namespace ILLink.RoslynAnalyzer
 
 				return sb.ToString ();
 			}
-		}
 
+			
+		}
+		// Looks at features settings in the XML to determine whether the element should be processed
+		protected virtual bool ShouldProcessElement (XPathNavigator nav) => true;
 	}
 }
