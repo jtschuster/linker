@@ -23,8 +23,11 @@ namespace ILLink.RoslynAnalyzer
 {
 	class AnalyzerXmlAttributeParser : XmlProcessorBase
 	{
-		AnalyzerXmlAttributeParser (string xmlDocumentLocation, Stream documentStream) : base (xmlDocumentLocation, documentStream) { }
-		private AdditionalText? findFile (CompilationStartAnalysisContext compilationStartContext)
+		AnalyzerXmlAttributeParser (string xmlDocumentLocation, Stream documentStream) : base (xmlDocumentLocation, documentStream)
+		{
+		}
+
+		private static AdditionalText? findFile (CompilationStartAnalysisContext compilationStartContext)
 		{
 			// Find the file with the invalid terms.
 			ImmutableArray<AdditionalText> additionalFiles = compilationStartContext.Options.AdditionalFiles;
@@ -45,10 +48,6 @@ namespace ILLink.RoslynAnalyzer
 				fileText.Write (writer);
 			}
 			stream.Position = 0;
-
-			using (stream) {
-				_document = XDocument.Load (stream, LoadOptions.SetLineInfo).CreateNavigator ();
-			}
 			ProcessXml ();
 		}
 		protected virtual void ProcessXml ()
