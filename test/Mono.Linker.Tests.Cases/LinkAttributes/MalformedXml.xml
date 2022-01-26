@@ -1,0 +1,11 @@
+﻿<?xml version="1.0" encoding="utf-8" ?> 
+<linker>
+  <type fullname="NonExistentType">
+	  <attribute fullname="RUC">
+		  <argument type="System.String">
+			  this has ruc
+		  </argument>
+	  </attribute>
+  </type> 
+</linker>
+

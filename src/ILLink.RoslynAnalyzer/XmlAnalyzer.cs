@@ -23,7 +23,9 @@ namespace ILLink.RoslynAnalyzer
 	{
 		private static readonly DiagnosticDescriptor s_moreThanOneValueForParameterOfMethod = DiagnosticDescriptors.GetDiagnosticDescriptor (DiagnosticId.XmlMoreThanOneValyForParameterOfMethod);
 		private static readonly DiagnosticDescriptor s_errorProcessingXmlLocation = DiagnosticDescriptors.GetDiagnosticDescriptor (DiagnosticId.ErrorProcessingXmlLocation);
-		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create (s_moreThanOneValueForParameterOfMethod, s_errorProcessingXmlLocation);
+		private static readonly DiagnosticDescriptor s_xmlCouldNotResolveType = DiagnosticDescriptors.GetDiagnosticDescriptor (DiagnosticId.XmlCouldNotResolveType);
+
+		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create (s_moreThanOneValueForParameterOfMethod, s_errorProcessingXmlLocation, s_xmlCouldNotResolveType);
 
 		private static readonly Regex _linkAttributesRegex = new (@"ILLink\.LinkAttributes.*\.xml");
 
@@ -37,18 +39,42 @@ namespace ILLink.RoslynAnalyzer
 				context.RegisterAdditionalFileAction (additionalFileContext => {
 					// Check if it's a LinkAttributes xml
 					if (_linkAttributesRegex.IsMatch (Path.GetFileName (additionalFileContext.AdditionalFile.Path))) {
+						string fileName = additionalFileContext.AdditionalFile.Path;
 						if (additionalFileContext.AdditionalFile.GetText () is not SourceText text)
 							return;
 
-						if (!ValidateLinkAttributesXml (additionalFileContext, text))
-							return;
+						//if (!ValidateLinkAttributesXml (additionalFileContext, text))
+						//	return;
 
 						if (!context.TryGetValue (text, ProcessXmlProvider, out var xmlData) || xmlData is null)
 							return;
 						foreach (var root in xmlData) {
 							if (root is LinkAttributes.TypeNode typeNode) {
+								additionalFileContext.Compilation.GetSymbolsWithName (typeNode.FullName);
+								if(!typeNode.ResolveType (context.Compilation)) {
+									additionalFileContext.ReportDiagnostic (Diagnostic.Create (s_xmlCouldNotResolveType, null, typeNode.FullName));
+									context.RegisterCompilationEndAction (context => {
+										context.ReportDiagnostic (Diagnostic.Create (s_xmlCouldNotResolveType, null, typeNode.FullName));
+									});
+								}
 								foreach (var duplicatedMethods in typeNode.Methods.GroupBy (m => m.Name).Where (m => m.Count () > 0)) {
 									additionalFileContext.ReportDiagnostic (Diagnostic.Create (s_moreThanOneValueForParameterOfMethod, null, duplicatedMethods.FirstOrDefault ().Name, typeNode.FullName));
+								}
+								context.RegisterSymbolAction (typeSymbolContext => {
+									if (typeSymbolContext.Symbol is not INamedTypeSymbol symbol)
+										return;
+									if (symbol.GetDisplayName () != typeNode.FullName)
+										return;
+									typeNode.Symbol = symbol;
+									typeNode.semaphore.Release (LinkAttributes.TypeNode.semaphoreCount);
+								}, SymbolKind.NamedType);
+								foreach (var attribute in typeNode.Attributes) {
+									context.RegisterSymbolAction (symbolContext => {
+										if (symbolContext.Symbol is not INamedTypeSymbol symbol)
+											return;
+										if (symbol.GetDisplayName () != attribute.FullName)
+											return;
+									}, SymbolKind.NamedType);
 								}
 							}
 						}

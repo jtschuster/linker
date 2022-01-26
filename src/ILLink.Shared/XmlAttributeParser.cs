@@ -9,7 +9,7 @@ using System.Xml.XPath;
 
 namespace ILLink.Shared
 {
-	public static class LinkAttributes
+	public static partial class LinkAttributes
 	{
 		public static List<IRootNode> ProcessXml (XDocument doc)
 		{
@@ -24,7 +24,7 @@ namespace ILLink.Shared
 			}
 		}
 
-		public record AttributeNode : NodeBase
+		public partial record AttributeNode : NodeBase
 		{
 			public string FullName;
 			public string Internal;
@@ -271,7 +271,7 @@ namespace ILLink.Shared
 					roots.Add (new TypeNode (typeNav));
 				}
 				foreach (XPathNavigator assemblyNav in nav.SelectChildren (AssemblyElementName, "")) {
-					roots.Add (new TypeNode (assemblyNav));
+					roots.Add (new AssemblyNode (assemblyNav));
 				}
 				return roots;
 			}

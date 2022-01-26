@@ -1,5 +1,6 @@
 
 using System.Threading.Tasks;
+using Xunit;
 
 namespace ILLink.RoslynAnalyzer.Tests
 {
@@ -7,7 +8,7 @@ namespace ILLink.RoslynAnalyzer.Tests
 	{
 		protected override string TestSuiteName => "LinkAttributes";
 
-		//[Fact]
+		[Fact]
 		public Task EmbeddedLinkAttributes ()
 		{
 			return RunTest (nameof (EmbeddedLinkAttributes));
@@ -31,6 +32,16 @@ namespace ILLink.RoslynAnalyzer.Tests
 		public Task LinkAttributeErrorCases ()
 		{
 			return RunTest (nameof (LinkAttributeErrorCases));
+		}
+		//[Fact]
+		public Task EmbeddedLinkXmlUnresolvedReferencesAreReported ()
+		{
+			return RunTest (nameof (EmbeddedLinkXmlUnresolvedReferencesAreReported));
+		}
+		[Fact]
+		public Task MalformedXml ()
+		{
+			return RunTest (nameof (MalformedXml));
 		}
 	}
 }
