@@ -21,7 +21,7 @@ namespace ILLink.RoslynAnalyzer
 	[DiagnosticAnalyzer (LanguageNames.CSharp)]
 	public class XmlAnalyzer : DiagnosticAnalyzer
 	{
-		private static readonly DiagnosticDescriptor s_moreThanOneValueForParameterOfMethod = DiagnosticDescriptors.GetDiagnosticDescriptor (DiagnosticId.XmlMoreThanOneValyForParameterOfMethod);
+		private static readonly DiagnosticDescriptor s_moreThanOneValueForParameterOfMethod = DiagnosticDescriptors.GetDiagnosticDescriptor (DiagnosticId.XmlMoreThanOneValueForParameterOfMethod);
 		private static readonly DiagnosticDescriptor s_errorProcessingXmlLocation = DiagnosticDescriptors.GetDiagnosticDescriptor (DiagnosticId.ErrorProcessingXmlLocation);
 		private static readonly DiagnosticDescriptor s_xmlCouldNotResolveType = DiagnosticDescriptors.GetDiagnosticDescriptor (DiagnosticId.XmlCouldNotResolveType);
 
