@@ -9,7 +9,7 @@ namespace Mono.Linker.Tests.Cases.LinkAttributes
 	[SetupLinkAttributesFile ("MalformedXml.xml")]
 	[SetupLinkerArgument ("--skip-unresolved", "true")]
 
-	[LogContains ("warning IL2008: Could not resolve type 'NonExistentType'.")]
+	[ExpectedWarning ("IL2008", "Could not resolve type 'NonExistentType'.")]
 	class MalformedXml
 	{
 		public static void Main ()

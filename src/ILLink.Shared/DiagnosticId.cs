@@ -1,6 +1,8 @@
 ﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+using Microsoft.CodeAnalysis;
+
 namespace ILLink.Shared
 {
 	public enum DiagnosticId
@@ -193,6 +195,7 @@ namespace ILLink.Shared
 
 		public static string GetDiagnosticSubcategory (this DiagnosticId diagnosticId) =>
 			(int) diagnosticId switch {
+				2008 => MessageSubCategory.TrimXml,
 				2026 => MessageSubCategory.TrimAnalysis,
 				2032 => MessageSubCategory.TrimAnalysis,
 				2041 => MessageSubCategory.TrimAnalysis,
@@ -208,5 +211,18 @@ namespace ILLink.Shared
 				var x when x >= 2109 && x <= 2116 => MessageSubCategory.TrimAnalysis,
 				_ => MessageSubCategory.None,
 			};
+	}
+	public static class DiagnosticDescriptorExtensions
+	{
+		public static string GetDiagnosticSubcategory (this DiagnosticDescriptor descriptor)
+		{
+			if (!(descriptor.Id.Substring (0, 2) == "IL")) {
+				return "";
+			}
+			if (!int.TryParse (descriptor.Id.Substring (2), out var number))
+				return "";
+			var dId = (DiagnosticId) number;
+			return dId.GetDiagnosticSubcategory ();
+		}
 	}
 }

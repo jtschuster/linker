@@ -7,6 +7,7 @@ using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
+using ILLink.Shared;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -129,6 +130,8 @@ namespace ILLink.RoslynAnalyzer.Tests
 					if (typeSymbol.Locations.Length != 1)
 						throw new NotImplementedException ("Type defined in multiple source locations.");
 
+					if (d.Descriptor.GetDiagnosticSubcategory () == "Trim XML")
+						return true;
 					// For classes, only consider diagnostics which originate from the type (not its members).
 					// Approximate this by getting the location from the start of the type's syntax (which includes
 					// attributes declared on the type) to the opening brace.
@@ -136,7 +139,7 @@ namespace ILLink.RoslynAnalyzer.Tests
 						classSyntax.GetLocation ().SourceSpan.Start,
 						classSyntax.OpenBraceToken.GetLocation ().SourceSpan.Start
 					);
-
+					
 					return d.Location.SourceSpan.IntersectsWith (classSpan);
 				}
 

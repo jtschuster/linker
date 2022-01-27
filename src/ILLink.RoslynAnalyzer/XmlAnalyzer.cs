@@ -52,10 +52,7 @@ namespace ILLink.RoslynAnalyzer
 							if (root is LinkAttributes.TypeNode typeNode) {
 								additionalFileContext.Compilation.GetSymbolsWithName (typeNode.FullName);
 								if(!typeNode.ResolveType (context.Compilation)) {
-									additionalFileContext.ReportDiagnostic (Diagnostic.Create (s_xmlCouldNotResolveType, null, typeNode.FullName));
-									context.RegisterCompilationEndAction (context => {
-										context.ReportDiagnostic (Diagnostic.Create (s_xmlCouldNotResolveType, null, typeNode.FullName));
-									});
+									ReportXmlDiagnostic (additionalFileContext, s_xmlCouldNotResolveType, typeNode.LineInfo, typeNode.FullName);
 								}
 								foreach (var duplicatedMethods in typeNode.Methods.GroupBy (m => m.Name).Where (m => m.Count () > 0)) {
 									additionalFileContext.ReportDiagnostic (Diagnostic.Create (s_moreThanOneValueForParameterOfMethod, null, duplicatedMethods.FirstOrDefault ().Name, typeNode.FullName));
@@ -81,6 +78,22 @@ namespace ILLink.RoslynAnalyzer
 					}
 				});
 			});
+		}
+		
+		private void ReportXmlDiagnostic(AdditionalFileAnalysisContext context, DiagnosticDescriptor diag, IXmlLineInfo? lineInfo, params string[] messageArgs)
+		{
+			// IXmlLineInfo is 1-indexed
+			var (lineNumber, linePosition) = (lineInfo?.LineNumber ?? 1, lineInfo?.LinePosition ?? 1);
+			context.ReportDiagnostic (
+				Diagnostic.Create (diag,
+					Location.Create(
+						context.AdditionalFile.Path,
+						context.AdditionalFile.GetText()?.SpanFromLinePosition(lineNumber, linePosition) ?? new TextSpan(),
+						new LinePositionSpan(
+							new LinePosition(lineNumber-1, linePosition-1),
+							new LinePosition(lineNumber-1, linePosition-1))),
+					messageArgs));
+
 		}
 
 		private static XmlSchema GenerateLinkAttributesSchema ()

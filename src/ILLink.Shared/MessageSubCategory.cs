@@ -8,5 +8,6 @@ namespace ILLink.Shared
 		public const string None = "";
 		public const string TrimAnalysis = "Trim analysis";
 		public const string UnresolvedAssembly = "Unresolved assembly";
+		public const string TrimXml = "Trim XML";
 	}
 }
