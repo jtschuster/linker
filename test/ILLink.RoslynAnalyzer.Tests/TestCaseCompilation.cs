@@ -9,7 +9,6 @@ using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Diagnostics;
-using Mono.Linker.Tests.Cases.Expectations.Metadata;
 
 namespace ILLink.RoslynAnalyzer.Tests
 {
