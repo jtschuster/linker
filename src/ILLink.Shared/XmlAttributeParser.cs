@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using System.Xml;
 using System.Xml.Linq;
 using System.Xml.XPath;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace ILLink.Shared
 {

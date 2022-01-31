@@ -1,8 +1,10 @@
 ﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Collections.Specialized;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -39,6 +41,8 @@ namespace ILLink.RoslynAnalyzer
 					if (_linkAttributesRegex.IsMatch (Path.GetFileName (additionalFileContext.AdditionalFile.Path))) {
 						if (additionalFileContext.AdditionalFile.GetText () is not SourceText text)
 							return;
+
+						DiagnosticReporters.Add (text, ReportDiagnostic (additionalFileContext));
 
 						if (!ValidateLinkAttributesXml (additionalFileContext, text))
 							return;
@@ -84,7 +88,13 @@ namespace ILLink.RoslynAnalyzer
 			XmlSchemaSet schemaSet = new XmlSchemaSet ();
 			schemaSet.Add (LinkAttributesSchema);
 			bool valid = true;
-			document.Validate (schemaSet, (sender, error) => { });
+			document.Validate (schemaSet, (sender, error) => {
+				context.ReportDiagnostic (Diagnostic.Create (
+					s_errorProcessingXmlLocation,
+					Location.Create(context.AdditionalFile.Path, new TextSpan(), new LinePositionSpan()),
+					error.Message));
+				valid = false;
+			});
 			return valid;
 		}
 
@@ -98,6 +108,17 @@ namespace ILLink.RoslynAnalyzer
 			return stream;
 		}
 
+		private static Action<DiagnosticId, IXmlLineInfo?, string[]> ReportDiagnostic (AdditionalFileAnalysisContext context)
+		{
+		return (DiagnosticId diagnosticId, IXmlLineInfo? lineInfo, string[] messageArgs) =>
+			{
+				context.ReportDiagnostic (Diagnostic.Create (DiagnosticDescriptors.GetDiagnosticDescriptor(diagnosticId), null, context.AdditionalFile.Path));
+			};
+		}
+
+		static ListDictionary DiagnosticReporters = new ();
+		
+
 		// Used in context.TryGetValue to cache the xml model
 		public static readonly SourceTextValueProvider<List<LinkAttributes.IRootNode>?> ProcessXmlProvider = new ((sourceText) => {
 			Stream stream = GenerateStream (sourceText);
@@ -107,7 +128,9 @@ namespace ILLink.RoslynAnalyzer
 			} catch (System.Xml.XmlException) {
 				return null;
 			}
-			return LinkAttributes.ProcessXml (document);
+			if (DiagnosticReporters[sourceText] is LinkAttributes.ReportDiagnostic reportDiagnostic)
+				return LinkAttributes.ProcessXml (document, reportDiagnostic, reportDiagnostic);
+			return null;
 		});
 	}
 }
