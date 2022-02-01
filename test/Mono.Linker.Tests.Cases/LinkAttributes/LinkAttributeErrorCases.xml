@@ -27,6 +27,7 @@
       <!-- IL2051 -->
       <attribute fullname="Mono.Linker.Tests.Cases.LinkAttributes.LinkAttributeErrorCases/AttributeWithPropertyAttribute">
         <property>StringValue</property>
+        <property> </property>
       </attribute>
 
       <!-- IL2052 -->
@@ -51,6 +52,15 @@
 
       <!-- IL2024 -->
       <method name="MethodWithParameter">
+        <parameter name="methodParameter">
+          <attribute fullname="Mono.Linker.Tests.Cases.LinkAttributes.LinkAttributeErrorCases/FirstAttribute" />
+        </parameter>
+        <parameter name="methodParameter">
+          <attribute fullname="Mono.Linker.Tests.Cases.LinkAttributes.LinkAttributeErrorCases/SecondAttribute" />
+        </parameter>
+      </method>
+		
+      <method name="MethodWithParameter" feature="featurename">
         <parameter name="methodParameter">
           <attribute fullname="Mono.Linker.Tests.Cases.LinkAttributes.LinkAttributeErrorCases/FirstAttribute" />
         </parameter>

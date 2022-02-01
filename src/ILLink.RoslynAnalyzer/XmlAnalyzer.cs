@@ -15,6 +15,7 @@ using System.Xml.Linq;
 using System.Xml.Schema;
 using ILLink.Shared;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Text;
 
@@ -25,7 +26,9 @@ namespace ILLink.RoslynAnalyzer
 	{
 		private static readonly DiagnosticDescriptor s_moreThanOneValueForParameterOfMethod = DiagnosticDescriptors.GetDiagnosticDescriptor (DiagnosticId.XmlMoreThanOneValueForParameterOfMethod);
 		private static readonly DiagnosticDescriptor s_errorProcessingXmlLocation = DiagnosticDescriptors.GetDiagnosticDescriptor (DiagnosticId.ErrorProcessingXmlLocation);
-		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create (s_moreThanOneValueForParameterOfMethod, s_errorProcessingXmlLocation);
+		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics
+			=> LinkAttributes.SupportedDiagnosticIds.Select(diagnosticId => DiagnosticDescriptors.GetDiagnosticDescriptor(diagnosticId))
+				.Union(new[] { s_moreThanOneValueForParameterOfMethod, s_errorProcessingXmlLocation }).ToImmutableArray();
 
 		private static readonly Regex _linkAttributesRegex = new (@"ILLink\.LinkAttributes.*\.xml");
 
@@ -42,10 +45,11 @@ namespace ILLink.RoslynAnalyzer
 						if (additionalFileContext.AdditionalFile.GetText () is not SourceText text)
 							return;
 
-						DiagnosticReporters.Add (text, ReportDiagnostic (additionalFileContext));
+						DiagnosticReporters.Add (text, ReportDiagnostic(additionalFileContext));
+						Filenames.Add (text, additionalFileContext.AdditionalFile.Path);
 
-						if (!ValidateLinkAttributesXml (additionalFileContext, text))
-							return;
+						//if (!ValidateLinkAttributesXml (additionalFileContext, text))
+						//	return;
 
 						if (!context.TryGetValue (text, ProcessXmlProvider, out var xmlData) || xmlData is null) {
 							additionalFileContext.ReportDiagnostic (Diagnostic.Create (s_errorProcessingXmlLocation, null, additionalFileContext.AdditionalFile.Path));
@@ -89,11 +93,16 @@ namespace ILLink.RoslynAnalyzer
 			schemaSet.Add (LinkAttributesSchema);
 			bool valid = true;
 			document.Validate (schemaSet, (sender, error) => {
-				context.ReportDiagnostic (Diagnostic.Create (
-					s_errorProcessingXmlLocation,
-					Location.Create(context.AdditionalFile.Path, new TextSpan(), new LinePositionSpan()),
-					error.Message));
-				valid = false;
+//				var lineposition = new LinePosition(error.Exception.LineNumber, error.Exception.LinePosition);
+//				var message = error.Message;
+//				if (sender is XElement element) {
+//					message = message.Insert(0, $"Element <{element.Name.LocalName}>: ");
+//				}
+//				context.ReportDiagnostic (Diagnostic.Create (
+//					s_errorProcessingXmlLocation,
+//					Location.Create(context.AdditionalFile.Path, new TextSpan(), new LinePositionSpan(lineposition, lineposition)),
+//					message.ToString()));
+//				valid = false;
 			});
 			return valid;
 		}
@@ -108,15 +117,25 @@ namespace ILLink.RoslynAnalyzer
 			return stream;
 		}
 
-		private static Action<DiagnosticId, IXmlLineInfo?, string[]> ReportDiagnostic (AdditionalFileAnalysisContext context)
+		static LinkAttributes.ReportDiagnostic ReportDiagnostic (AdditionalFileAnalysisContext context)
 		{
 		return (DiagnosticId diagnosticId, IXmlLineInfo? lineInfo, string[] messageArgs) =>
 			{
-				context.ReportDiagnostic (Diagnostic.Create (DiagnosticDescriptors.GetDiagnosticDescriptor(diagnosticId), null, context.AdditionalFile.Path));
+				var severity = DiagnosticSeverity.Warning;
+				if ((int) diagnosticId < 2000)
+					severity = DiagnosticSeverity.Error;
+				context.ReportDiagnostic (Diagnostic.Create (
+					DiagnosticDescriptors.GetDiagnosticDescriptor (diagnosticId),
+					lineInfo?.ToLocation (context.AdditionalFile.Path),
+					severity,
+					null,
+					null,
+					messageArgs));
 			};
 		}
 
 		static ListDictionary DiagnosticReporters = new ();
+		static ListDictionary Filenames = new ();
 		
 
 		// Used in context.TryGetValue to cache the xml model
@@ -128,9 +147,19 @@ namespace ILLink.RoslynAnalyzer
 			} catch (System.Xml.XmlException) {
 				return null;
 			}
-			if (DiagnosticReporters[sourceText] is LinkAttributes.ReportDiagnostic reportDiagnostic)
-				return LinkAttributes.ProcessXml (document, reportDiagnostic, reportDiagnostic);
+			if (DiagnosticReporters[sourceText] is LinkAttributes.ReportDiagnostic reportDiagnostic
+				&& Filenames[sourceText] is string filename)
+				return LinkAttributes.ProcessXml (filename, document, reportDiagnostic);
 			return null;
 		});
+	}
+
+	static class IXmlLineInfoExtensions
+	{
+		public static Location ToLocation(this IXmlLineInfo xmlLineInfo, string filename)
+		{
+			var linePosition = new LinePosition (xmlLineInfo.LineNumber, xmlLineInfo.LinePosition);
+			return Location.Create (filename, new TextSpan(), new LinePositionSpan (linePosition, linePosition));
+		}
 	}
 }

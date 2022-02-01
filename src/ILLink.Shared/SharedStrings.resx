@@ -193,7 +193,7 @@
     <value>Element in XML document contains a 'featuredefault' attribute with an invalid value.</value>
   </data>
   <data name="XmlDocumentLocationHasInvalidFeatureDefaultMessage" xml:space="preserve">
-    <value>Failed to process '{0}'. Unsupported value for featuredefault attribute.</value>
+    <value>Failed to process '{0}'. Unsupported value for featuredefault attribute. This attribute only supports the true value, to indicate that this is the default behavior for a feature when a value is not given.</value>
   </data>
   <data name="UnrecognizedCommandLineOptionTitle" xml:space="preserve">
     <value>The string passed to the command-line does not correspond to a valid command-line option.</value>
