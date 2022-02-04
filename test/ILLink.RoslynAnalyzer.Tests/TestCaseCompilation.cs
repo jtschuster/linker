@@ -5,10 +5,14 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using System.Net.NetworkInformation;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Diagnostics;
+using Microsoft.CodeAnalysis.Text;
+using Mono.Linker.Tests.Cases.Expectations.Metadata;
+using Mono.Linker.Tests.Cases.LinkXml;
 
 namespace ILLink.RoslynAnalyzer.Tests
 {
@@ -19,8 +23,7 @@ namespace ILLink.RoslynAnalyzer.Tests
 				new RequiresDynamicCodeAnalyzer (),
 				new COMAnalyzer (),
 				new RequiresAssemblyFilesAnalyzer (),
-				new RequiresUnreferencedCodeAnalyzer (),
-				new XmlAnalyzer ());
+				new RequiresUnreferencedCodeAnalyzer ());
 
 		public static Task<(CompilationWithAnalyzers Compilation, SemanticModel SemanticModel, List<Diagnostic> ExceptionDiagnostics)> CreateCompilation (
 			string src,

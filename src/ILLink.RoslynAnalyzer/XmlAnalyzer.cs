@@ -15,7 +15,6 @@ using System.Xml.Linq;
 using System.Xml.Schema;
 using ILLink.Shared;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Text;
 
@@ -27,7 +26,7 @@ namespace ILLink.RoslynAnalyzer
 		private static readonly DiagnosticDescriptor s_moreThanOneValueForParameterOfMethod = DiagnosticDescriptors.GetDiagnosticDescriptor (DiagnosticId.XmlMoreThanOneValueForParameterOfMethod);
 		private static readonly DiagnosticDescriptor s_errorProcessingXmlLocation = DiagnosticDescriptors.GetDiagnosticDescriptor (DiagnosticId.ErrorProcessingXmlLocation);
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics
-			=> LinkAttributes.SupportedDiagnosticIds.Select(diagnosticId => DiagnosticDescriptors.GetDiagnosticDescriptor(diagnosticId))
+			=> LinkAttributes<AttributeData, ISymbol>.SupportedDiagnosticIds.Select(diagnosticId => DiagnosticDescriptors.GetDiagnosticDescriptor(diagnosticId))
 				.Union(new[] { s_moreThanOneValueForParameterOfMethod, s_errorProcessingXmlLocation }).ToImmutableArray();
 
 		private static readonly Regex _linkAttributesRegex = new (@"ILLink\.LinkAttributes.*\.xml");
@@ -47,16 +46,15 @@ namespace ILLink.RoslynAnalyzer
 
 						DiagnosticReporters.Add (text, ReportDiagnostic(additionalFileContext));
 						Filenames.Add (text, additionalFileContext.AdditionalFile.Path);
-
-						//if (!ValidateLinkAttributesXml (additionalFileContext, text))
-						//	return;
+						AttributeResolvers.Add (text, ResolveAttribute(additionalFileContext, context.Compilation));
+						AttributeProviderResolvers.Add (text, ResolveAttribute(additionalFileContext, context.Compilation));
 
 						if (!context.TryGetValue (text, ProcessXmlProvider, out var xmlData) || xmlData is null) {
 							additionalFileContext.ReportDiagnostic (Diagnostic.Create (s_errorProcessingXmlLocation, null, additionalFileContext.AdditionalFile.Path));
 							return;
 						}
 						foreach (var root in xmlData) {
-							if (root is LinkAttributes.TypeNode typeNode) {
+							if (root is LinkAttributes<AttributeData, ISymbol>.TypeNode typeNode) {
 								foreach (var duplicatedMethods in typeNode.Methods.GroupBy (m => m.Name).Where (m => m.Count () > 0)) {
 									additionalFileContext.ReportDiagnostic (Diagnostic.Create (s_moreThanOneValueForParameterOfMethod, null, duplicatedMethods.FirstOrDefault ().Name, typeNode.FullName));
 								}
@@ -93,16 +91,7 @@ namespace ILLink.RoslynAnalyzer
 			schemaSet.Add (LinkAttributesSchema);
 			bool valid = true;
 			document.Validate (schemaSet, (sender, error) => {
-//				var lineposition = new LinePosition(error.Exception.LineNumber, error.Exception.LinePosition);
-//				var message = error.Message;
-//				if (sender is XElement element) {
-//					message = message.Insert(0, $"Element <{element.Name.LocalName}>: ");
-//				}
-//				context.ReportDiagnostic (Diagnostic.Create (
-//					s_errorProcessingXmlLocation,
-//					Location.Create(context.AdditionalFile.Path, new TextSpan(), new LinePositionSpan(lineposition, lineposition)),
-//					message.ToString()));
-//				valid = false;
+				valid = false;
 			});
 			return valid;
 		}
@@ -117,9 +106,39 @@ namespace ILLink.RoslynAnalyzer
 			return stream;
 		}
 
-		static LinkAttributes.ReportDiagnostic ReportDiagnostic (AdditionalFileAnalysisContext context)
+		static Func<LinkAttributes<AttributeData, ISymbol>.AttributeNode, AttributeData?> ResolveAttribute(AdditionalFileAnalysisContext context, Compilation compilation)
 		{
-		return (DiagnosticId diagnosticId, IXmlLineInfo? lineInfo, string[] messageArgs) =>
+			return (LinkAttributes<AttributeData, ISymbol>.AttributeNode node) => {
+				if (node.Internal == "RemoveAttributeInstances" || node.Internal == "RemoveAttributeInstancesAttribute") {
+					// Handle RAI
+				}
+				foreach (var symbol in compilation.GetSymbolsWithName ((string name) => node.FullName.Contains (name))) {
+					if (symbol is not INamedTypeSymbol typeSymbol)
+						continue;
+					if (typeSymbol.BaseType is not INamedTypeSymbol baseType)
+						continue;
+					if (baseType.Name == "System.Attribute") {
+						var data = new XmlAttributeData (typeSymbol);
+						return data;
+					}
+				}
+				context.ReportDiagnostic (Diagnostic.Create (DiagnosticDescriptors.GetDiagnosticDescriptor (DiagnosticId.CouldNotResolveCustomAttributeTypeValue), node.LineInfo?.ToLocation (context.AdditionalFile.Path), node.FullName));
+				return null;
+			}; 
+		}
+
+		static Func<LinkAttributes<AttributeData, ISymbol>.AttributeTargetNode, ISymbol?> ResolveAttributeProvider(AdditionalFileAnalysisContext context, Compilation compilation)
+		{
+			return (LinkAttributes<AttributeData, ISymbol>.AttributeTargetNode node) => 
+			{
+				foreach (var tree in compilation.SyntaxTrees) {
+				}
+			};
+		}
+		
+		static Action<DiagnosticId, IXmlLineInfo?, string[]> ReportDiagnostic (AdditionalFileAnalysisContext context)
+		{
+			return (DiagnosticId diagnosticId, IXmlLineInfo? lineInfo, string[] messageArgs) =>
 			{
 				var severity = DiagnosticSeverity.Warning;
 				if ((int) diagnosticId < 2000)
@@ -136,10 +155,12 @@ namespace ILLink.RoslynAnalyzer
 
 		static ListDictionary DiagnosticReporters = new ();
 		static ListDictionary Filenames = new ();
+		static ListDictionary AttributeResolvers = new ();
+		static ListDictionary AttributeProviderResolvers = new ();
 		
 
 		// Used in context.TryGetValue to cache the xml model
-		public static readonly SourceTextValueProvider<List<LinkAttributes.IRootNode>?> ProcessXmlProvider = new ((sourceText) => {
+		public static readonly SourceTextValueProvider<LinkAttributes<AttributeData, ISymbol>?> ProcessXmlProvider = new ((sourceText) => {
 			Stream stream = GenerateStream (sourceText);
 			XDocument? document;
 			try {
@@ -147,9 +168,14 @@ namespace ILLink.RoslynAnalyzer
 			} catch (System.Xml.XmlException) {
 				return null;
 			}
-			if (DiagnosticReporters[sourceText] is LinkAttributes.ReportDiagnostic reportDiagnostic
+			if (DiagnosticReporters[sourceText] is 
+					Action<DiagnosticId, IXmlLineInfo?, string[]> reportDiagnostic
+				&& AttributeResolvers[sourceText] is
+					Func<LinkAttributes<AttributeData, ISymbol>.AttributeNode, AttributeData?> resolveAttribute
+				&& AttributeProviderResolvers[sourceText] is
+					Func<LinkAttributes<AttributeData, ISymbol>.AttributeTargetNode, ISymbol?> resolveAttributeProvider
 				&& Filenames[sourceText] is string filename)
-				return LinkAttributes.ProcessXml (filename, document, reportDiagnostic);
+				return LinkAttributes<AttributeData, ISymbol>.ProcessXml (document, filename, reportDiagnostic, resolveAttributeProvider, resolveAttribute);
 			return null;
 		});
 	}

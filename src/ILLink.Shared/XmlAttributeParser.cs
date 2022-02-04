@@ -10,9 +10,8 @@ using System.Xml.XPath;
 
 namespace ILLink.Shared
 {
-	public static class LinkAttributes
+	public partial class LinkAttributes<TCustomAttribute, TCustomAttributeProvider>
 	{
-		public delegate void ReportDiagnostic (DiagnosticId diagnosticId, IXmlLineInfo? lineInfo, params string[] messageArgs);
 		public static ImmutableArray<DiagnosticId> SupportedDiagnosticIds = ImmutableArray.Create (
 			DiagnosticId.XmlFeatureDoesNotSpecifyFeatureValue,
 			DiagnosticId.XmlRemoveAttributeInstancesCanOnlyBeUsedOnType,
@@ -23,17 +22,59 @@ namespace ILLink.Shared
 			DiagnosticId.XmlDocumentLocationHasInvalidFeatureDefault
 			);
 
-		public static List<IRootNode> ProcessXml (string filename, XDocument doc, ReportDiagnostic reportDiagnostic)
+		public List<ITopLevelNode>? TopLevelNodes { get; }
+
+		public Dictionary<TCustomAttributeProvider, HashSet<TCustomAttribute>>? InjectedAttributes { get; }
+
+		private LinkAttributes (Dictionary<TCustomAttributeProvider, HashSet<TCustomAttribute>> injectedAttributes, List<ITopLevelNode> topLevelNodes)
 		{
+			TopLevelNodes = topLevelNodes;
+			InjectedAttributes = injectedAttributes;
+		}
+
+		public static LinkAttributes<TCustomAttribute, TCustomAttributeProvider>? ProcessXml (
+			XDocument doc,
+			string filename,
+			Action<DiagnosticId, IXmlLineInfo?, string[]> reportDiagnostic,
+			// How do I properly report the different kinds of errors in resolution.
+			Func<AttributeTargetNode, TCustomAttributeProvider?> resolveAttributeProvider,
+			Func<AttributeNode, TCustomAttribute?> resolveAttribute)
+		{
+			var injectedAttributes = new Dictionary<TCustomAttributeProvider, HashSet<TCustomAttribute>> ();
+			var context = new LinkAttributesContext (filename, reportDiagnostic, resolveAttributeProvider, resolveAttribute, injectedAttributes);
 			try {
 				XPathNavigator nav = doc.CreateNavigator ();
-				return NodeBase.ProcessRootNodes (nav,  reportDiagnostic, filename);
+				var topLevelNodes = NodeBase.ProcessRootNodes (nav, context);
+				return new LinkAttributes<TCustomAttribute, TCustomAttributeProvider> (context.InjectedAttributes, topLevelNodes);
 			}
 			// TODO: handle the correct exceptions correctly
 			catch (ArgumentException) {
 				// XML doesn't have a <linker> tag and is invalid. The document should have been validated before 
-				return new List<IRootNode> ();
+				return null;
 			}
+		}
+
+		internal record LinkAttributesContext
+		{
+			public readonly string FileName;
+			public readonly Action<DiagnosticId, IXmlLineInfo?, string[]> ReportDiagnostic;
+			public readonly Func<AttributeTargetNode, TCustomAttributeProvider?> ResolveProvider;
+			public readonly Func<AttributeNode, TCustomAttribute?> ResolveAttribute;
+			public readonly Dictionary<TCustomAttributeProvider, HashSet<TCustomAttribute>> InjectedAttributes;
+			public LinkAttributesContext (
+				string fileName,
+				Action<DiagnosticId, IXmlLineInfo?, string[]> reportDiagnostic,
+				Func<AttributeTargetNode, TCustomAttributeProvider?> resolveProvider,
+				Func<AttributeNode, TCustomAttribute?> resolveAttribute,
+				Dictionary<TCustomAttributeProvider, HashSet<TCustomAttribute>> injectedAttributes)
+			{
+				FileName = fileName;
+				ReportDiagnostic = reportDiagnostic;
+				ResolveProvider = resolveProvider;
+				ResolveAttribute = resolveAttribute;
+				InjectedAttributes = injectedAttributes;
+			}
+
 		}
 
 		public record AttributeNode : NodeBase
@@ -44,8 +85,9 @@ namespace ILLink.Shared
 			public List<IAttributeArgumentNode> Arguments;
 			public List<AttributePropertyNode> Properties;
 			public List<AttributeFieldNode> Fields;
+			public TCustomAttribute? ResolvedAttribute;
 
-			public AttributeNode (XPathNavigator nav, ReportDiagnostic reportDiagnostic, string filename) : base (nav,  reportDiagnostic, filename)
+			internal AttributeNode (XPathNavigator nav, LinkAttributesContext context) : base (nav, context)
 			{
 				var arguments = new List<IAttributeArgumentNode> ();
 				foreach (XPathNavigator argNav in nav.SelectChildren (ArgumentElementName, "")) {
@@ -69,26 +111,24 @@ namespace ILLink.Shared
 				Arguments = arguments;
 				Properties = properties;
 				Fields = fields;
-				if (string.IsNullOrEmpty (FullName) && string.IsNullOrEmpty(Internal))
-					reportDiagnostic (DiagnosticId.XmlElementDoesNotContainRequiredAttributeFullname, nav as IXmlLineInfo);
+				if (string.IsNullOrEmpty (FullName) && string.IsNullOrEmpty (Internal))
+					context.ReportDiagnostic (DiagnosticId.XmlElementDoesNotContainRequiredAttributeFullname, nav as IXmlLineInfo, Array.Empty<string> ());
 
 				if (string.IsNullOrEmpty (FullName) && !string.IsNullOrEmpty (Internal)) {
 					if (Internal == "RemoveAttributeInstances" || Internal == "RemoveAttributeInstancesAttribute") {
 						var parent = nav.Clone ();
 						parent.MoveToParent ();
 						if (parent.Name != TypeElementName)
-							reportDiagnostic (DiagnosticId.XmlRemoveAttributeInstancesCanOnlyBeUsedOnType, nav as IXmlLineInfo);
-					}
-					else {
-						reportDiagnostic (DiagnosticId.UnrecognizedInternalAttribute, nav as IXmlLineInfo, Internal);
+							context.ReportDiagnostic (DiagnosticId.XmlRemoveAttributeInstancesCanOnlyBeUsedOnType, nav as IXmlLineInfo, Array.Empty<string> ());
+					} else {
+						context.ReportDiagnostic (DiagnosticId.UnrecognizedInternalAttribute, nav as IXmlLineInfo, new string[] { Internal });
 					}
 				}
 
 				if (!string.IsNullOrEmpty (FullName) && !string.IsNullOrEmpty (Internal)) {
 					// New diagnostic?
 				};
-				
-				
+
 				static IAttributeArgumentNode ProcessArgument (XPathNavigator argNav)
 				{
 					var type = argNav.GetAttribute ("type", "");
@@ -108,6 +148,18 @@ namespace ILLink.Shared
 					var arg = new AttributeArgumentNode (type, argNav.Value);
 					return arg;
 				}
+			}
+
+			void ResolveAttribute(LinkAttributesContext context)
+			{
+				ResolvedAttribute = context.ResolveAttribute (this);
+			}
+
+			internal static AttributeNode Create(XPathNavigator nav, LinkAttributesContext context)
+			{
+				var node = new AttributeNode (nav, context);
+				node.ResolveAttribute (context);
+				return node;
 			}
 		}
 
@@ -160,24 +212,39 @@ namespace ILLink.Shared
 			}
 		}
 
+
 		public partial record TypeMemberNode : FeatureSwitchedNode
 		{
 			public string Name;
 			public string Signature;
 
-			public TypeMemberNode (XPathNavigator nav, ReportDiagnostic reportDiagnostic, string filename) : base (nav,  reportDiagnostic, filename)
+			internal TypeMemberNode (XPathNavigator nav, LinkAttributesContext context) : base (nav, context)
 			{
 				Name = GetName (nav);
 				Signature = GetSignature (nav);
+			}
+
+			internal static TypeMemberNode Create(XPathNavigator nav, LinkAttributesContext context)
+			{
+				var node = new TypeMemberNode (nav, context);
+				node.Resolve (context);
+				return node;
 			}
 		}
 
 		public partial record ParameterNode : AttributeTargetNode
 		{
 			public string Name;
-			public ParameterNode (XPathNavigator nav, ReportDiagnostic reportDiagnostic, string filename) : base (nav,  reportDiagnostic, filename)
+			internal ParameterNode (XPathNavigator nav, LinkAttributesContext context) : base (nav, context)
 			{
 				Name = GetName (nav);
+			}
+
+			internal static ParameterNode Create(XPathNavigator nav, LinkAttributesContext context)
+			{
+				var node = new ParameterNode (nav, context);
+				node.Resolve (context);
+				return node;
 			}
 		}
 
@@ -185,18 +252,25 @@ namespace ILLink.Shared
 		{
 			public List<ParameterNode> Parameters;
 			public List<AttributeNode> ReturnAttributes;
-			public MethodNode (XPathNavigator nav, ReportDiagnostic reportDiagnostic, string filename) : base (nav,  reportDiagnostic, filename)
+			internal MethodNode (XPathNavigator nav, LinkAttributesContext context) : base (nav, context)
 			{
 				Parameters = new List<ParameterNode> ();
 				ReturnAttributes = new List<AttributeNode> ();
 				foreach (XPathNavigator parameterNav in nav.SelectChildren (ParameterElementName, "")) {
-					Parameters.Add (new ParameterNode (parameterNav,  reportDiagnostic, filename));
+					Parameters.Add (ParameterNode.Create (parameterNav, context));
 				}
 				foreach (XPathNavigator returnNav in nav.SelectChildren (ReturnElementName, "")) {
 					foreach (XPathNavigator attributeNav in returnNav.SelectChildren (AttributeElementName, "")) {
-						ReturnAttributes.Add (new AttributeNode (attributeNav,  reportDiagnostic, filename));
+						ReturnAttributes.Add (AttributeNode.Create (attributeNav, context));
 					}
 				}
+			}
+
+			internal static MethodNode Create(XPathNavigator nav, LinkAttributesContext context)
+			{
+				var node = new MethodNode (nav, context);
+				node.Resolve (context);
+				return node;
 			}
 		}
 
@@ -207,85 +281,106 @@ namespace ILLink.Shared
 			public List<TypeMemberNode> Properties;
 			public List<MethodNode> Methods;
 			public List<NestedTypeNode> Types;
-			public TypeBaseNode (XPathNavigator nav, ReportDiagnostic reportDiagnostic, string filename) : base (nav,  reportDiagnostic, filename)
+			internal TypeBaseNode (XPathNavigator nav, LinkAttributesContext context) : base (nav, context)
 			{
 				Methods = new List<MethodNode> ();
 				Properties = new List<TypeMemberNode> ();
 				Fields = new List<TypeMemberNode> ();
 				Events = new List<TypeMemberNode> ();
 				foreach (XPathNavigator methodNav in nav.SelectChildren (MethodElementName, "")) {
-					Methods.Add (new MethodNode (methodNav,  reportDiagnostic, filename));
+					Methods.Add (MethodNode.Create (methodNav, context));
 				}
 				foreach (XPathNavigator propertyNav in nav.SelectChildren (PropertyElementName, "")) {
-					Properties.Add (new TypeMemberNode (propertyNav,  reportDiagnostic, filename));
+					Properties.Add (TypeMemberNode.Create (propertyNav, context));
 				}
 				foreach (XPathNavigator eventNav in nav.SelectChildren (EventElementName, "")) {
-					Events.Add (new TypeMemberNode (eventNav,  reportDiagnostic, filename));
+					Events.Add (TypeMemberNode.Create (eventNav, context));
 				}
 				foreach (XPathNavigator fieldNav in nav.SelectChildren (FieldElementName, "")) {
-					Fields.Add (new TypeMemberNode (fieldNav,  reportDiagnostic, filename));
+					Fields.Add (TypeMemberNode.Create (fieldNav, context));
 				}
 				Types = new List<NestedTypeNode> ();
 				foreach (XPathNavigator nestedTypeNav in nav.SelectChildren (TypeElementName, "")) {
-					Types.Add (new NestedTypeNode (nestedTypeNav,  reportDiagnostic, filename));
+					Types.Add (NestedTypeNode.Create (nestedTypeNav, context));
 				}
 			}
 		}
 		public partial record NestedTypeNode : TypeBaseNode
 		{
 			public string Name;
-			public NestedTypeNode (XPathNavigator nav, ReportDiagnostic reportDiagnostic, string filename) : base (nav,  reportDiagnostic, filename)
+			internal NestedTypeNode (XPathNavigator nav, LinkAttributesContext context) : base (nav, context)
 			{
 				Name = GetName (nav);
 			}
-		}
-
-		public partial record TypeNode : TypeBaseNode, IRootNode
-		{
-			public string FullName;
-			public TypeNode (XPathNavigator nav, ReportDiagnostic reportDiagnostic, string filename) : base (nav,  reportDiagnostic, filename)
+			
+			internal static NestedTypeNode Create(XPathNavigator nav, LinkAttributesContext context)
 			{
-				FullName = GetFullName (nav);
+				var node = new NestedTypeNode (nav, context);
+				node.Resolve (context);
+				return node;
 			}
 		}
 
-		public record AssemblyNode : FeatureSwitchedNode, IRootNode
+		public partial record TypeNode : TypeBaseNode, ITopLevelNode
+		{
+			public string FullName;
+			internal TypeNode (XPathNavigator nav, LinkAttributesContext context) : base (nav, context)
+			{
+				FullName = GetFullName (nav);
+			}
+
+			internal static TypeNode Create(XPathNavigator nav, LinkAttributesContext context)
+			{
+				var node = new TypeNode (nav, context);
+				node.Resolve (context);
+				return node;
+			}
+		}
+
+		public record AssemblyNode : FeatureSwitchedNode, ITopLevelNode
 		{
 			public List<TypeNode> Types;
 			public string FullName;
-			public AssemblyNode (XPathNavigator nav, ReportDiagnostic reportDiagnostic, string filename) : base (nav,  reportDiagnostic, filename)
+			internal AssemblyNode (XPathNavigator nav, LinkAttributesContext context) : base (nav, context)
 			{
 				FullName = GetFullName (nav);
 				Types = new List<TypeNode> ();
 				foreach (XPathNavigator typeNav in nav.SelectChildren (TypeElementName, "")) {
-					Types.Add (new TypeNode (typeNav,  reportDiagnostic, filename));
+					Types.Add (TypeNode.Create (typeNav, context));
 				}
+			}
+			internal static AssemblyNode Create(XPathNavigator nav, LinkAttributesContext context)
+			{
+				var node = new AssemblyNode (nav, context);
+				node.Resolve (context);
+				return node;
 			}
 		}
 
-		public interface IRootNode
+		public interface ITopLevelNode
 		{
 		}
 
 		public abstract record NodeBase : XmlProcessorBase
 		{
 			public IXmlLineInfo? LineInfo;
-			protected NodeBase (XPathNavigator nav, ReportDiagnostic reportDiagnostic, string filename)
+			internal NodeBase (XPathNavigator nav, LinkAttributesContext context)
 			{
 				LineInfo = (nav is IXmlLineInfo lineInfo) ? lineInfo : null;
 			}
 
-			public static List<IRootNode> ProcessRootNodes (XPathNavigator nav, ReportDiagnostic reportDiagnostic, string filename)
+			internal static List<ITopLevelNode> ProcessRootNodes (XPathNavigator nav, LinkAttributesContext context)
 			{
 				if (!nav.MoveToChild (LinkerElementName, XmlNamespace)) {
-					throw new ArgumentException ($"XML does not have <{LinkerElementName}> base tag");
+					context.ReportDiagnostic (DiagnosticId.XmlException, nav as IXmlLineInfo, new string[] { context.FileName, $"XML does not have <{LinkerElementName}> base tag" });
+					return new List<ITopLevelNode> ();
 				}
-				var roots = new List<IRootNode> ();
+				var roots = new List<ITopLevelNode> ();
 				foreach (XPathNavigator typeNav in nav.SelectChildren (TypeElementName, "")) {
-					roots.Add (new TypeNode (typeNav,  reportDiagnostic, filename));
+					roots.Add (TypeNode.Create (typeNav, context));
 				}
 				foreach (XPathNavigator assemblyNav in nav.SelectChildren (AssemblyElementName, "")) {
-					roots.Add (new AssemblyNode (assemblyNav,  reportDiagnostic, filename));
+					roots.Add (AssemblyNode.Create (assemblyNav, context));
 				}
 				return roots;
 			}
@@ -294,12 +389,31 @@ namespace ILLink.Shared
 		public abstract record AttributeTargetNode : NodeBase
 		{
 			public List<AttributeNode> Attributes;
+			public TCustomAttributeProvider? ResolvedProvider;
+			internal void Resolve (LinkAttributesContext context)
+			{
+				ResolvedProvider = context.ResolveProvider (this);
+				if (ResolvedProvider == null)
+					return;
+				foreach (var attributeNode in Attributes) {
+					var resolvedAttribute = attributeNode.ResolvedAttribute;
+					if (resolvedAttribute is null)
+						return;
+					if (context.InjectedAttributes.TryGetValue(ResolvedProvider, out var set)) {
+						set.Add (resolvedAttribute);
+					} else {
+						var newSet = new HashSet<TCustomAttribute> ();
+						newSet.Add (resolvedAttribute);
+						context.InjectedAttributes.Add(ResolvedProvider, newSet);
+					}
+				}
+			}
 
-			public AttributeTargetNode (XPathNavigator nav, ReportDiagnostic reportDiagnostic, string filename) : base (nav,  reportDiagnostic, filename)
+			internal AttributeTargetNode (XPathNavigator nav, LinkAttributesContext context) : base (nav, context)
 			{
 				var attributes = new List<AttributeNode> ();
 				foreach (XPathNavigator attributeNav in nav.SelectChildren (AttributeElementName, "")) {
-					var attr = new AttributeNode (attributeNav,  reportDiagnostic, filename);
+					var attr = AttributeNode.Create (attributeNav, context);
 					if (attr == null)
 						continue;
 					attributes.Add (attr);
@@ -312,7 +426,7 @@ namespace ILLink.Shared
 		{
 			public FeatureSwitch? FeatureSwitch;
 
-			public FeatureSwitchedNode (XPathNavigator nav, ReportDiagnostic reportDiagnostic, string filename) : base (nav,  reportDiagnostic, filename)
+			internal FeatureSwitchedNode (XPathNavigator nav, LinkAttributesContext context) : base (nav, context)
 			{
 				string feature, featurevalue, featuredefault;
 				bool FeatureValue = false;
@@ -327,11 +441,10 @@ namespace ILLink.Shared
 
 				featurevalue = GetAttribute (nav, "featurevalue");
 				if (string.IsNullOrEmpty (featurevalue)) {
-					reportDiagnostic (DiagnosticId.XmlFeatureDoesNotSpecifyFeatureValue, nav as IXmlLineInfo, filename, feature);
+					context.ReportDiagnostic (DiagnosticId.XmlFeatureDoesNotSpecifyFeatureValue, nav as IXmlLineInfo, new string[] { context.FileName, feature });
 					valid = false;
-				}
-				else if (!bool.TryParse (featurevalue, out FeatureValue)) {
-					reportDiagnostic (DiagnosticId.XmlUnsupportedNonBooleanValueForFeature, nav as IXmlLineInfo, filename, featurevalue);
+				} else if (!bool.TryParse (featurevalue, out FeatureValue)) {
+					context.ReportDiagnostic (DiagnosticId.XmlUnsupportedNonBooleanValueForFeature, nav as IXmlLineInfo, new string[] { context.FileName, featurevalue });
 					valid = false;
 				}
 
@@ -339,11 +452,10 @@ namespace ILLink.Shared
 				if (string.IsNullOrEmpty (featuredefault))
 					FeatureDefault = false;
 				else if (!bool.TryParse (featurevalue, out FeatureValue)) {
-					reportDiagnostic (DiagnosticId.XmlUnsupportedNonBooleanValueForFeature, nav as IXmlLineInfo, filename, featuredefault);
+					context.ReportDiagnostic (DiagnosticId.XmlUnsupportedNonBooleanValueForFeature, nav as IXmlLineInfo, new string[] { context.FileName, featuredefault });
 					valid = false;
-				}
-				else if (!FeatureDefault) {
-					reportDiagnostic (DiagnosticId.XmlDocumentLocationHasInvalidFeatureDefault, nav as IXmlLineInfo, filename);
+				} else if (!FeatureDefault) {
+					context.ReportDiagnostic (DiagnosticId.XmlDocumentLocationHasInvalidFeatureDefault, nav as IXmlLineInfo, new string[] { context.FileName });
 					valid = false;
 				}
 
@@ -368,3 +480,4 @@ namespace ILLink.Shared
 		}
 	}
 }
+
