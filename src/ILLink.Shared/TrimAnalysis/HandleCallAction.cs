@@ -587,6 +587,8 @@ namespace ILLink.Shared.TrimAnalysis
 						}
 					}
 				}
+			case IntrinsicId.Nullable_GetUnderlyingType:
+				AddReturnValue (argumentValues[0]);
 				break;
 
 			case IntrinsicId.None:
