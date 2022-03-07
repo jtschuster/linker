@@ -3034,7 +3034,7 @@ namespace Mono.Linker.Steps
 			}
 
 			if (ShouldParseMethodBody (method))
-				MarkMethodBody (method.Body);
+				MarkMethodBody (method.Body, reason.Kind);
 
 			if (method.DeclaringType.IsMulticastDelegate ()) {
 				string? methodPair = null;
@@ -3314,9 +3314,10 @@ namespace Mono.Linker.Steps
 			MarkMethod (method, reason);
 		}
 
-		protected virtual void MarkMethodBody (MethodBody body)
+		protected virtual void MarkMethodBody (MethodBody body, DependencyKind? dependency = null)
 		{
-			if (Context.IsOptimizationEnabled (CodeOptimizations.UnreachableBodies, body.Method) && IsUnreachableBody (body)) {
+			if (dependency != DependencyKind.DynamicallyAccessedMember && dependency != DependencyKind.DynamicallyAccessedMemberOnType
+				&& Context.IsOptimizationEnabled (CodeOptimizations.UnreachableBodies, body.Method) && IsUnreachableBody (body)) {
 				MarkAndCacheConvertToThrowExceptionCtor (new DependencyInfo (DependencyKind.UnreachableBodyRequirement, body.Method));
 				_unreachableBodies.Add ((body, ScopeStack.CurrentScope));
 				return;
