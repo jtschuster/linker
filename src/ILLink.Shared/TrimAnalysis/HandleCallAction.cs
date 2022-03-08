@@ -605,7 +605,7 @@ namespace ILLink.Shared.TrimAnalysis
 						NullableSystemTypeValue nullableSystemType => new SystemTypeValue (nullableSystemType.UnderlyingTypeValue),
 						NullableValueWithDynamicallyAccessedMembers nullableDamValue => nullableDamValue.UnderlyingTypeValue,
 						ValueWithDynamicallyAccessedMembers damValue => damValue,
-						_ => GetMethodReturnValue(calledMethod, returnValueDynamicallyAccessedMemberTypes)
+						_ => GetMethodReturnValue (calledMethod, returnValueDynamicallyAccessedMemberTypes)
 					});
 				}
 				returnValue = new (values);

@@ -742,8 +742,7 @@ namespace Mono.Linker.Dataflow
 					default:
 						PushUnknown (currentStack);
 						return;
-					}
-				else {
+					} else {
 					var typeHandle = new RuntimeTypeHandleValue (new TypeProxy (resolvedDefinition));
 					currentStack.Push (new StackSlot (typeHandle));
 					return;
