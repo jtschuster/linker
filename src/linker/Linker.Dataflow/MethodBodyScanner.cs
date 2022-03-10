@@ -196,7 +196,7 @@ namespace Mono.Linker.Dataflow
 					value = valueToStore;
 				} else {
 					// If the previous value came from a previous basic block, then some other use of 
-					// the local cousee the previous value, so we must merge the new value with the 
+					// the local could see the previous value, so we must merge the new value with the 
 					// old value.
 					value = MultiValueLattice.Meet (existingValue.Value, valueToStore);
 				}
