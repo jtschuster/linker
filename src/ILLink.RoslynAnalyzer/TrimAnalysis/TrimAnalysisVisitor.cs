@@ -72,14 +72,6 @@ namespace ILLink.RoslynAnalyzer.TrimAnalysis
 			var elements = operation.Initializer?.ElementValues.Select (val => Visit (val, argument)).ToArray () ?? System.Array.Empty<MultiValue> ();
 			return new ArrayValue (new ConstIntValue (elements.Length), elements);
 		}
-		//public override MultiValue VisitArrayInitializer (IArrayInitializerOperation operation, StateValue argument)
-		//{
-		//	MultiValue returnValue = base.VisitArrayInitializer (operation, argument);
-		//	foreach (var child in operation.Children) {
-		//		returnValue = _multiValueLattice.Meet(returnValue, Visit (child, argument));
-		//	}
-		//	return returnValue;
-		//}
 
 		public override MultiValue VisitArrayCreation (IArrayCreationOperation operation, StateValue argument)
 		{
