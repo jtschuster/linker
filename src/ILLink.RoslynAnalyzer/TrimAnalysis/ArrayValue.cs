@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using System.Collections.Generic;
+using System;
 using ILLink.Shared.DataFlow;
 using MultiValue = ILLink.Shared.DataFlow.ValueSet<ILLink.Shared.DataFlow.SingleValue>;
 
@@ -57,24 +58,6 @@ namespace ILLink.Shared.TrimAnalysis
 				elements.Add (value);
 			}
 			return new ArrayValue (Size, elements.ToArray ());
-		}
-
-		public bool Equals (ArrayValue? other)
-		{
-			if (other == null) return false;
-			if (other is not ArrayValue otherArray) return false;
-			if (!otherArray.Size.Equals (Size)) return false;
-			for (int i = 0; i < _elements.Length; i++) {
-				if (!otherArray.TryGetValueByIndex (i, out var otherElement)
-					|| !otherElement.Equals (_elements[i]))
-					return false;
-			}
-			return base.Equals (other);
-		}
-
-		public override int GetHashCode ()
-		{
-			return base.GetHashCode ();
 		}
 	}
 }
