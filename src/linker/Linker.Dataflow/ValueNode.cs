@@ -112,6 +112,8 @@ namespace ILLink.Shared.TrimAnalysis
 		public override IEnumerable<string> GetDiagnosticArgumentsForAnnotationMismatch ()
 			=> new string[] { GenericParameter.GenericParameter.Name, DiagnosticUtilities.GetGenericParameterDeclaringMemberDisplayName (GenericParameter.GenericParameter) };
 
+		public override SingleValue DeepCopy () => this; // This value is immutable
+
 		public override string ToString () => this.ValueToString (GenericParameter, DynamicallyAccessedMemberTypes);
 	}
 
@@ -123,6 +125,8 @@ namespace ILLink.Shared.TrimAnalysis
 		public RuntimeMethodHandleValue (MethodDefinition methodRepresented) => MethodRepresented = methodRepresented;
 
 		public readonly MethodDefinition MethodRepresented;
+
+		public override SingleValue DeepCopy () => this; // This value is immutable
 
 		public override string ToString () => this.ValueToString (MethodRepresented);
 	}
@@ -182,6 +186,8 @@ namespace ILLink.Shared.TrimAnalysis
 
 		public TypeDefinition? StaticType => Method.DeclaringType;
 
+		public override SingleValue DeepCopy () => this; // This value is immutable
+
 		public override string ToString () => this.ValueToString (Method, DynamicallyAccessedMemberTypes);
 	}
 
@@ -231,6 +237,8 @@ namespace ILLink.Shared.TrimAnalysis
 			=> new string[] { Field.GetDisplayName () };
 
 		public TypeDefinition? StaticType { get; }
+
+		public override SingleValue DeepCopy () => this; // This value is immutable
 
 		public override string ToString () => this.ValueToString (Field, DynamicallyAccessedMemberTypes);
 	}
