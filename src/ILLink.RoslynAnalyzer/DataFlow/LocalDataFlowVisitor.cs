@@ -205,6 +205,7 @@ namespace ILLink.RoslynAnalyzer.DataFlow
 					return TopValue;
 
 				return HandleArrayElementRead (Visit (operation.ArrayReference, state), Visit (operation.Indices[0], state), operation);
+
 			}
 
 			return TopValue;
