@@ -600,6 +600,7 @@ namespace ILLink.Shared.TrimAnalysis
 						}
 					}
 				}
+			break;
 			case IntrinsicId.Nullable_GetUnderlyingType:
 				foreach (var singlevalue in argumentValues[0].AsEnumerable ()) {
 					AddReturnValue (singlevalue switch {
@@ -790,8 +791,6 @@ namespace ILLink.Shared.TrimAnalysis
 		private partial IEnumerable<SystemReflectionMethodBaseValue> GetMethodsOnTypeHierarchy (TypeProxy type, string name, BindingFlags? bindingFlags);
 
 		private partial IEnumerable<SystemTypeValue> GetNestedTypesOnType (TypeProxy type, string name, BindingFlags? bindingFlags);
-
-		private partial bool TryGetBaseType (TypeProxy type, out TypeProxy baseType);
 
 		private partial void MarkStaticConstructor (TypeProxy type);
 
