@@ -9,15 +9,24 @@ namespace ILLink.Shared.TrimAnalysis
 {
 	partial record ArrayValue
 	{
+		static ValueSetLattice<SingleValue> MultiValueLattice => default;
+
 		public readonly Dictionary<int, MultiValue> IndexValues;
 
-		public ArrayValue (SingleValue size, MultiValue[] elements)
+		public static MultiValue Create (MultiValue size)
+		{
+			MultiValue result = MultiValueLattice.Top;
+			foreach (var sizeValue in size) {
+				result = MultiValueLattice.Meet (result, new MultiValue (new ArrayValue (sizeValue)));
+			}
+
+			return result;
+		}
+
+		ArrayValue (SingleValue size)
 		{
 			Size = size;
-			IndexValues = new Dictionary<int, MultiValue> (elements.Length);
-			for (int i = 0; i < elements.Length; i++) {
-				IndexValues.Add (i, elements[i]);
-			}
+			IndexValues = new Dictionary<int, MultiValue> ();
 		}
 
 		public partial bool TryGetValueByIndex (int index, out MultiValue value)
@@ -53,11 +62,12 @@ namespace ILLink.Shared.TrimAnalysis
 		// Lattice Meet() is supposed to copy values, so we need to make a deep copy since ArrayValue is mutable through IndexValues
 		public override SingleValue DeepCopy ()
 		{
-			List<MultiValue> elements = new ();
+			var newArray = new ArrayValue (Size);
 			for (int i = 0; IndexValues.TryGetValue (i, out var value); i++) {
-				elements.Add (value.Clone ());
+				newArray.IndexValues.Add (i, value.Clone ());
 			}
-			return new ArrayValue (Size, elements.ToArray ());
+
+			return newArray;
 		}
 	}
 }
