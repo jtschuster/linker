@@ -7,7 +7,7 @@ using MultiValue = ILLink.Shared.DataFlow.ValueSet<ILLink.Shared.DataFlow.Single
 
 namespace ILLink.Shared.TrimAnalysis
 {
-	partial record ArrayValue : IDeepCopyValue<SingleValue>
+	partial record ArrayValue
 	{
 		public readonly Dictionary<int, MultiValue> IndexValues;
 
@@ -51,11 +51,11 @@ namespace ILLink.Shared.TrimAnalysis
 		}
 
 		// Lattice Meet() is supposed to copy values, so we need to make a deep copy since ArrayValue is mutable through IndexValues
-		public SingleValue DeepCopy ()
+		public override SingleValue DeepCopy ()
 		{
 			List<MultiValue> elements = new ();
 			for (int i = 0; IndexValues.TryGetValue (i, out var value); i++) {
-				elements.Add (value);
+				elements.Add (value.Clone ());
 			}
 			return new ArrayValue (Size, elements.ToArray ());
 		}

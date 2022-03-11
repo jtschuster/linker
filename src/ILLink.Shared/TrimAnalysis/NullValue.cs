@@ -13,6 +13,8 @@ namespace ILLink.Shared.TrimAnalysis
 
 		public static NullValue Instance { get; } = new NullValue ();
 
+		public override SingleValue DeepCopy () => this; // This value is immutable
+
 		public override string ToString () => this.ValueToString ();
 	}
 }
