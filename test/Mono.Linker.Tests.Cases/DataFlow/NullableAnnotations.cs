@@ -44,7 +44,8 @@ namespace Mono.Linker.Tests.Cases.DataFlow
 		public static void Main ()
 		{
 			NullableOfAnnotatedGenericParameterRequiresPublicProperties<TestType> ();
-			Type _ = ReturnUnderlyingTypeThatRequiresProperties<Nullable<TestType>> (new ());
+			Type _ = ReturnUnderlyingTypeOfGenericParameterThatRequiresProperties<Nullable<TestType>> (new ());
+			_ = ReturnUnderlyingTypeOfParamThatRequiresProperties (typeof (TestType));
 			TestRequireRucMethodThroughNullable ();
 
 			DamOnNullableKeepsUnderlyingMembers ();
@@ -196,10 +197,19 @@ namespace Mono.Linker.Tests.Cases.DataFlow
 		[Kept]
 		[return: DynamicallyAccessedMembers (DAMT.PublicProperties)]
 		[return: KeptAttributeAttribute (typeof (DAM))]
-		static Type ReturnUnderlyingTypeThatRequiresProperties<[KeptAttributeAttribute (typeof (DAM))][DynamicallyAccessedMembers (DynamicallyAccessedMemberTypes.PublicProperties)] T> (T instance)
+		static Type ReturnUnderlyingTypeOfGenericParameterThatRequiresProperties<[KeptAttributeAttribute (typeof (DAM))][DynamicallyAccessedMembers (DynamicallyAccessedMemberTypes.PublicProperties)] T> (T instance)
 		{
 			Type type = Nullable.GetUnderlyingType (typeof (T)) ?? typeof (T);
 			return type;
+		}
+
+		[Kept]
+		[return: DynamicallyAccessedMembers (DAMT.PublicProperties)]
+		[return: KeptAttributeAttribute (typeof (DAM))]
+		static Type ReturnUnderlyingTypeOfParamThatRequiresProperties ([KeptAttributeAttribute (typeof (DAM))][DynamicallyAccessedMembers (DynamicallyAccessedMemberTypes.PublicProperties)] Type type)
+		{
+			Type type2 = Nullable.GetUnderlyingType (type) ?? type;
+			return type2;
 		}
 
 		[Kept]
