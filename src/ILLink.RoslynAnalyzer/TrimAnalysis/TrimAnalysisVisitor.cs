@@ -224,7 +224,9 @@ namespace ILLink.RoslynAnalyzer.TrimAnalysis
 
 		public override MultiValue HandleArrayElementReference (MultiValue arrayValue, MultiValue indexValue, IOperation operation)
 		{
+			// Array references are readable and writeable, so assume both happen
 			var referencedValue = HandleArrayElementRead (arrayValue, indexValue, operation);
+			// Assumes the final value is Unknown. This 
 			HandleArrayElementWrite (arrayValue, indexValue, UnknownValue.Instance, operation);
 			return referencedValue;
 		}
