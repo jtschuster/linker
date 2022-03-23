@@ -177,21 +177,7 @@ namespace Mono.Linker.Tests.Cases.DataFlow
 			arr[1].RequiresPublicFields (); // Warns
 		}
 
-		static void TestArrayResetGetElementOnArray (int i = 0)
-		{
-			Type[] arr = new Type[] { typeof (TestType) };
-			arr[0].RequiresPublicProperties ();
-
-			TakesType (arr[0]); // No reset 
-			arr[0].RequiresPublicMethods (); // Doesn't warn
-
-			TakesType (arr[i]); // No Reset
-			arr[0].RequiresPublicFields (); // Doesn't Warn
-		}
-
 		static void TakesTypeByRef (ref Type type) { }
-
-		static void TakesType (Type type) { }
 
 		[ExpectedWarning ("IL2062", nameof (DataFlowTypeExtensions.RequiresPublicFields))]
 		static void TestArrayResetAfterCall ()
