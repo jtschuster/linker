@@ -8,6 +8,7 @@ using ILLink.Shared.DataFlow;
 using ILLink.Shared.TrimAnalysis;
 using ILLink.Shared.TypeSystemProxy;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Operations;
 
@@ -73,7 +74,7 @@ namespace ILLink.RoslynAnalyzer.TrimAnalysis
 
 			// Don't track multi-dimensional arrays
 			if (operation.DimensionSizes.Length != 1)
-				return TopValue;
+				return UnknownValue.Instance;
 
 			// Don't track large arrays for performance reasons
 			if (operation.Initializer?.ElementValues.Length >= MaxTrackedArrayValues)
@@ -219,6 +220,13 @@ namespace ILLink.RoslynAnalyzer.TrimAnalysis
 					}
 				}
 			}
+		}
+
+		public override MultiValue HandleArrayElementReference (MultiValue arrayValue, MultiValue indexValue, IOperation operation)
+		{
+			var referencedValue = HandleArrayElementRead (arrayValue, indexValue, operation);
+			HandleArrayElementWrite (arrayValue, indexValue, UnknownValue.Instance, operation);
+			return referencedValue;
 		}
 
 		public override MultiValue HandleMethodCall (IMethodSymbol calledMethod, MultiValue instance, ImmutableArray<MultiValue> arguments, IOperation operation)

@@ -5,6 +5,7 @@ using System;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using ILLink.Shared.DataFlow;
+using ILLink.Shared.TrimAnalysis;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.FlowAnalysis;
@@ -69,6 +70,8 @@ namespace ILLink.RoslynAnalyzer.DataFlow
 		public abstract TValue HandleArrayElementRead (TValue arrayValue, TValue indexValue, IOperation operation);
 
 		public abstract void HandleArrayElementWrite (TValue arrayValue, TValue indexValue, TValue valueToWrite, IOperation operation);
+
+		public abstract TValue HandleArrayElementReference (TValue arrayValue, TValue indexValue, IOperation operation);
 
 		// This takes an IOperation rather than an IReturnOperation because the return value
 		// may (must?) come from BranchValue of an operation whose FallThroughSuccessor is the exit block.
@@ -196,6 +199,9 @@ namespace ILLink.RoslynAnalyzer.DataFlow
 
 		public override TValue VisitArrayElementReference (IArrayElementReferenceOperation operation, LocalDataFlowState<TValue, TValueLattice> state)
 		{
+			if (operation.GetValueUsageInfo (Context.OwningSymbol).HasFlag (ValueUsageInfo.Reference)) {
+				return HandleArrayElementReference (Visit (operation.ArrayReference, state), Visit (operation.Indices[0], state), operation);
+			}
 			if (operation.GetValueUsageInfo (Context.OwningSymbol).HasFlag (ValueUsageInfo.Read)) {
 				// Accessing an array element for reading is a call to the indexer
 				// or a plain array access. Just handle plain array access for now.
@@ -206,7 +212,6 @@ namespace ILLink.RoslynAnalyzer.DataFlow
 
 				return HandleArrayElementRead (Visit (operation.ArrayReference, state), Visit (operation.Indices[0], state), operation);
 			}
-
 			return TopValue;
 		}
 

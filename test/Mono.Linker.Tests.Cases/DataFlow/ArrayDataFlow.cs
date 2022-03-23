@@ -160,7 +160,8 @@ namespace Mono.Linker.Tests.Cases.DataFlow
 		}
 
 		// https://github.com/dotnet/linker/issues/2680 - analyzer doesn't reset array in this case
-		[ExpectedWarning ("IL2062", nameof (DataFlowTypeExtensions.RequiresPublicFields), ProducedBy = ProducedBy.Trimmer)]
+		[ExpectedWarning ("IL2062", nameof (DataFlowTypeExtensions.RequiresPublicFields))]
+		[ExpectedWarning ("IL2062", nameof (DataFlowTypeExtensions.RequiresPublicMethods), ProducedBy = ProducedBy.Analyzer)]
 		// https://github.com/dotnet/linker/issues/2632 - Ref params don't reset or track.
 		// [ExpectedWarning ("IL2062", nameof (DataFlowTypeExtensions.RequiresPublicMethods))]
 		static void TestArrayResetGetElementOnByRefArray (int i = 0)
@@ -170,13 +171,27 @@ namespace Mono.Linker.Tests.Cases.DataFlow
 
 			TakesTypeByRef (ref arr[0]); // Should reset index 0 - linker doesn't
 			arr[0].RequiresPublicMethods (); // Should warn -- linker doesn't
-			arr[1].RequiresPublicMethods (); // Shouldn't warn
+			arr[1].RequiresNonPublicMethods (); // Shouldn't warn
 
 			TakesTypeByRef (ref arr[i]); // Reset - unknown index
 			arr[1].RequiresPublicFields (); // Warns
 		}
 
+		static void TestArrayResetGetElementOnArray (int i = 0)
+		{
+			Type[] arr = new Type[] { typeof (TestType) };
+			arr[0].RequiresPublicProperties ();
+
+			TakesType (arr[0]); // No reset 
+			arr[0].RequiresPublicMethods (); // Doesn't warn
+
+			TakesType (arr[i]); // No Reset
+			arr[0].RequiresPublicFields (); // Doesn't Warn
+		}
+
 		static void TakesTypeByRef (ref Type type) { }
+
+		static void TakesType (Type type) { }
 
 		[ExpectedWarning ("IL2062", nameof (DataFlowTypeExtensions.RequiresPublicFields))]
 		static void TestArrayResetAfterCall ()
