@@ -73,7 +73,7 @@ namespace ILLink.RoslynAnalyzer.TrimAnalysis
 
 			// Don't track multi-dimensional arrays
 			if (operation.DimensionSizes.Length != 1)
-				return TopValue;
+				return UnknownValue.Instance;
 
 			// Don't track large arrays for performance reasons
 			if (operation.Initializer?.ElementValues.Length >= MaxTrackedArrayValues)
