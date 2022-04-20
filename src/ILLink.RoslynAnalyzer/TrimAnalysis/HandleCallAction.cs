@@ -1,5 +1,5 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
-// The .NET Foundation licenses this file to you under the MIT license.
+// Copyright (c) .NET Foundation and contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -47,6 +47,15 @@ namespace ILLink.Shared.TrimAnalysis
 		private partial MethodThisParameterValue GetMethodThisParameterValue (MethodProxy method, DynamicallyAccessedMemberTypes dynamicallyAccessedMemberTypes)
 			=> new (method.Method, dynamicallyAccessedMemberTypes);
 
+		private partial MethodThisParameterValue GetMethodThisParameterValue (MethodProxy method)
+			=> GetMethodThisParameterValue (method, method.Method.GetDynamicallyAccessedMemberTypes ());
+
+		private partial DynamicallyAccessedMemberTypes GetMethodParameterAnnotation (MethodProxy method, int parameterIndex)
+		{
+			Debug.Assert (method.Method.Parameters.Length > parameterIndex);
+			return FlowAnnotations.GetMethodParameterAnnotation (method.Method.Parameters[parameterIndex]);
+		}
+
 		private partial MethodParameterValue GetMethodParameterValue (MethodProxy method, int parameterIndex, DynamicallyAccessedMemberTypes dynamicallyAccessedMemberTypes)
 			=> new (method.Method.Parameters[parameterIndex], dynamicallyAccessedMemberTypes);
 
@@ -60,6 +69,19 @@ namespace ILLink.Shared.TrimAnalysis
 		{
 			foreach (var nestedType in type.Type.GetNestedTypesOnType (t => t.Name == name, bindingFlags))
 				yield return new SystemTypeValue (new TypeProxy (nestedType));
+		}
+
+		private partial bool MethodIsTypeConstructor (MethodProxy method)
+		{
+			if (!method.Method.IsConstructor ())
+				return false;
+			var type = method.Method.ContainingType;
+			while (type is not null) {
+				if (type.IsTypeOf (WellKnownType.System_Type))
+					return true;
+				type = type.BaseType;
+			}
+			return false;
 		}
 
 		private partial bool TryGetBaseType (TypeProxy type, out TypeProxy? baseType)
@@ -84,6 +106,12 @@ namespace ILLink.Shared.TrimAnalysis
 
 		private partial void MarkPropertiesOnTypeHierarchy (TypeProxy type, string name, BindingFlags? bindingFlags)
 			=> _reflectionAccessAnalyzer.GetReflectionAccessDiagnosticsForPropertiesOnTypeHierarchy (_diagnosticContext, type.Type, name, bindingFlags);
+
+		private partial void MarkPublicParameterlessConstructorOnType (TypeProxy type)
+			=> _reflectionAccessAnalyzer.GetReflectionAccessDiagnosticsForPublicParameterlessConstructor (_diagnosticContext, type.Type);
+
+		private partial void MarkConstructorsOnType (TypeProxy type, BindingFlags? bindingFlags)
+			=> _reflectionAccessAnalyzer.GetReflectionAccessDiagnosticsForConstructorsOnType (_diagnosticContext, type.Type, bindingFlags);
 
 		private partial void MarkMethod (MethodProxy method)
 			=> ReflectionAccessAnalyzer.GetReflectionAccessDiagnosticsForMethod (_diagnosticContext, method.Method);

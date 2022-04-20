@@ -1,5 +1,5 @@
-// Licensed to the .NET Foundation under one or more agreements.
-// The .NET Foundation licenses this file to you under the MIT license.
+// Copyright (c) .NET Foundation and contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
 using System.Collections.Generic;
@@ -14,9 +14,7 @@ using ILLink.Shared.TypeSystemProxy;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 using Mono.Linker.Steps;
-
 using BindingFlags = System.Reflection.BindingFlags;
-
 using MultiValue = ILLink.Shared.DataFlow.ValueSet<ILLink.Shared.DataFlow.SingleValue>;
 
 namespace Mono.Linker.Dataflow
@@ -72,7 +70,7 @@ namespace Mono.Linker.Dataflow
 		{
 			Scan (methodBody);
 
-			if (GetReturnTypeWithoutModifiers (methodBody.Method.ReturnType).MetadataType != MetadataType.Void) {
+			if (!methodBody.Method.ReturnsVoid ()) {
 				var method = methodBody.Method;
 				var methodReturnValue = GetMethodReturnValue (method);
 				if (methodReturnValue.DynamicallyAccessedMemberTypes != 0) {
@@ -302,14 +300,38 @@ namespace Mono.Linker.Dataflow
 			case IntrinsicId.Nullable_GetUnderlyingType:
 			case IntrinsicId.Expression_Property when calledMethod.HasParameterOfType (1, "System.Reflection.MethodInfo"):
 			case var fieldOrPropertyInstrinsic when fieldOrPropertyInstrinsic == IntrinsicId.Expression_Field || fieldOrPropertyInstrinsic == IntrinsicId.Expression_Property:
-			case IntrinsicId.Type_get_BaseType: {
+			case IntrinsicId.Type_get_BaseType:
+			case IntrinsicId.Type_GetConstructor: {
 					var instanceValue = MultiValueLattice.Top;
 					IReadOnlyList<MultiValue> parameterValues = methodParams;
 					if (calledMethodDefinition.HasImplicitThis ()) {
 						instanceValue = methodParams[0];
 						parameterValues = parameterValues.Skip (1).ToImmutableList ();
 					}
-					return handleCallAction.Invoke (calledMethodDefinition, instanceValue, parameterValues, out methodReturnValue);
+					return handleCallAction.Invoke (calledMethodDefinition, instanceValue, parameterValues, out methodReturnValue, out _);
+				}
+
+			case IntrinsicId.None: {
+					if (calledMethodDefinition.IsPInvokeImpl) {
+						// Is the PInvoke dangerous?
+						bool comDangerousMethod = IsComInterop (calledMethodDefinition.MethodReturnType, calledMethodDefinition.ReturnType);
+						foreach (ParameterDefinition pd in calledMethodDefinition.Parameters) {
+							comDangerousMethod |= IsComInterop (pd, pd.ParameterType);
+						}
+
+						if (comDangerousMethod) {
+							analysisContext.ReportWarning (DiagnosticId.CorrectnessOfCOMCannotBeGuaranteed, calledMethodDefinition.GetDisplayName ());
+						}
+					}
+					_markStep.CheckAndReportRequiresUnreferencedCode (calledMethodDefinition);
+
+					var instanceValue = MultiValueLattice.Top;
+					IReadOnlyList<MultiValue> parameterValues = methodParams;
+					if (calledMethodDefinition.HasImplicitThis ()) {
+						instanceValue = methodParams[0];
+						parameterValues = parameterValues.Skip (1).ToImmutableList ();
+					}
+					return handleCallAction.Invoke (calledMethodDefinition, instanceValue, parameterValues, out methodReturnValue, out _);
 				}
 
 			case IntrinsicId.TypeDelegator_Ctor: {
@@ -575,52 +597,6 @@ namespace Mono.Linker.Dataflow
 				break;
 
 			//
-			// GetConstructor (Type[])
-			// GetConstructor (BindingFlags, Type[])
-			// GetConstructor (BindingFlags, Binder, Type[], ParameterModifier [])
-			// GetConstructor (BindingFlags, Binder, CallingConventions, Type[], ParameterModifier [])
-			//
-			case IntrinsicId.Type_GetConstructor: {
-					var parameters = calledMethod.Parameters;
-					BindingFlags? bindingFlags;
-					if (parameters.Count > 1 && calledMethod.Parameters[0].ParameterType.Name == "BindingFlags")
-						bindingFlags = GetBindingFlagsFromValue (methodParams[1]);
-					else
-						// Assume a default value for BindingFlags for methods that don't use BindingFlags as a parameter
-						bindingFlags = BindingFlags.Public | BindingFlags.Instance;
-
-					int? ctorParameterCount = parameters.Count switch {
-						1 => (methodParams[1].AsSingleValue () as ArrayValue)?.Size.AsConstInt (),
-						2 => (methodParams[2].AsSingleValue () as ArrayValue)?.Size.AsConstInt (),
-						4 => (methodParams[3].AsSingleValue () as ArrayValue)?.Size.AsConstInt (),
-						5 => (methodParams[4].AsSingleValue () as ArrayValue)?.Size.AsConstInt (),
-						_ => null,
-					};
-
-					// Go over all types we've seen
-					foreach (var value in methodParams[0]) {
-						if (value is SystemTypeValue systemTypeValue && !BindingFlagsAreUnsupported (bindingFlags)) {
-							if (HasBindingFlag (bindingFlags, BindingFlags.Public) && !HasBindingFlag (bindingFlags, BindingFlags.NonPublic)
-								&& ctorParameterCount == 0) {
-								MarkConstructorsOnType (analysisContext, systemTypeValue.RepresentedType.Type, m => m.IsPublic && m.Parameters.Count == 0, bindingFlags);
-							} else {
-								MarkConstructorsOnType (analysisContext, systemTypeValue.RepresentedType.Type, null, bindingFlags);
-							}
-						} else {
-							// Otherwise fall back to the bitfield requirements
-							var requiredMemberTypes = GetDynamicallyAccessedMemberTypesFromBindingFlagsForConstructors (bindingFlags);
-							// We can scope down the public constructors requirement if we know the number of parameters is 0
-							if (requiredMemberTypes == DynamicallyAccessedMemberTypes.PublicConstructors && ctorParameterCount == 0)
-								requiredMemberTypes = DynamicallyAccessedMemberTypes.PublicParameterlessConstructor;
-
-							var targetValue = GetMethodParameterValue (calledMethodDefinition, 0, requiredMemberTypes);
-							RequireDynamicallyAccessedMembers (analysisContext, value, targetValue);
-						}
-					}
-				}
-				break;
-
-			//
 			// System.Activator
 			//
 			// static CreateInstance (System.Type type)
@@ -804,46 +780,13 @@ namespace Mono.Linker.Dataflow
 				break;
 
 			default:
-
-				if (calledMethodDefinition.IsPInvokeImpl) {
-					// Is the PInvoke dangerous?
-					bool comDangerousMethod = IsComInterop (calledMethodDefinition.MethodReturnType, calledMethodDefinition.ReturnType);
-					foreach (ParameterDefinition pd in calledMethodDefinition.Parameters) {
-						comDangerousMethod |= IsComInterop (pd, pd.ParameterType);
-					}
-
-					if (comDangerousMethod) {
-						analysisContext.ReportWarning (DiagnosticId.CorrectnessOfCOMCannotBeGuaranteed, calledMethodDefinition.GetDisplayName ());
-					}
-				}
-
-				if (requiresDataFlowAnalysis) {
-					for (int parameterIndex = 0; parameterIndex < methodParams.Count; parameterIndex++) {
-						var targetValue = GetMethodParameterValue (calledMethodDefinition, parameterIndex);
-
-						if (targetValue.DynamicallyAccessedMemberTypes != DynamicallyAccessedMemberTypes.None) {
-							RequireDynamicallyAccessedMembers (analysisContext, methodParams[parameterIndex], targetValue);
-						}
-					}
-				}
-
-				_markStep.CheckAndReportRequiresUnreferencedCode (calledMethodDefinition);
-
-				// To get good reporting of errors we need to track the origin of the value for all method calls
-				// but except Newobj as those are special.
-				if (GetReturnTypeWithoutModifiers (calledMethodDefinition.ReturnType).MetadataType != MetadataType.Void) {
-					methodReturnValue = GetMethodReturnValue (calledMethodDefinition, returnValueDynamicallyAccessedMemberTypes);
-
-					return true;
-				}
-
-				return false;
+				throw new NotImplementedException ("Unhandled instrinsic");
 			}
 
 			// If we get here, we handled this as an intrinsic.  As a convenience, if the code above
 			// didn't set the return value (and the method has a return value), we will set it to be an
 			// unknown value with the return type of the method.
-			bool returnsVoid = GetReturnTypeWithoutModifiers (calledMethod.ReturnType).MetadataType == MetadataType.Void;
+			bool returnsVoid = calledMethod.ReturnsVoid ();
 			methodReturnValue = maybeMethodReturnValue ?? (returnsVoid ?
 				MultiValueLattice.Top :
 				GetMethodReturnValue (calledMethodDefinition, returnValueDynamicallyAccessedMemberTypes));
@@ -1043,12 +986,6 @@ namespace Mono.Linker.Dataflow
 			requireDynamicallyAccessedMembersAction.Invoke (value, targetValue);
 		}
 
-		static BindingFlags? GetBindingFlagsFromValue (in MultiValue parameter) => HandleCallAction.GetBindingFlagsFromValue (parameter);
-
-		static bool BindingFlagsAreUnsupported (BindingFlags? bindingFlags) => HandleCallAction.BindingFlagsAreUnsupported (bindingFlags);
-
-		static bool HasBindingFlag (BindingFlags? bindingFlags, BindingFlags? search) => HandleCallAction.HasBindingFlag (bindingFlags, search);
-
 		internal void MarkTypeForDynamicallyAccessedMembers (in AnalysisContext analysisContext, TypeDefinition typeDefinition, DynamicallyAccessedMemberTypes requiredMemberTypes, DependencyKind dependencyKind, bool declaredOnly = false)
 		{
 			foreach (var member in typeDefinition.GetDynamicallyAccessedMembers (_context, requiredMemberTypes, declaredOnly)) {
@@ -1106,7 +1043,7 @@ namespace Mono.Linker.Dataflow
 			_markStep.MarkInterfaceImplementation (interfaceImplementation, null, new DependencyInfo (dependencyKind, analysisContext.Origin.Provider));
 		}
 
-		void MarkConstructorsOnType (in AnalysisContext analysisContext, TypeDefinition type, Func<MethodDefinition, bool>? filter, BindingFlags? bindingFlags = null)
+		internal void MarkConstructorsOnType (in AnalysisContext analysisContext, TypeDefinition type, Func<MethodDefinition, bool>? filter, BindingFlags? bindingFlags = null)
 		{
 			foreach (var ctor in type.GetConstructorsOnType (filter, bindingFlags))
 				MarkMethod (analysisContext, ctor);

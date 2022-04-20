@@ -1,5 +1,5 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
-// The .NET Foundation licenses this file to you under the MIT license.
+// Copyright (c) .NET Foundation and contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
 using System.Collections.Generic;
@@ -70,11 +70,9 @@ namespace Mono.Linker.Tests.Cases.DataFlow
 				derivedType.BaseType.RequiresAll ();
 			}
 
-			// This is a very special case - normally there's basically no way to "new up" a Type instance via the "new" operator
-			// so the analyzer doesn't handle this case at all - meaning it sees it as empty value.
-			// Unlike linker which sees an unknown value and thus warns that it doesn't fulfill the All annotation.
-			// It's OK for the analyzer to be more forgiving in this case, due to the very special circumstances.
-			[ExpectedWarning ("IL2062", nameof (TestAllPropagated), ProducedBy = ProducedBy.Trimmer)]
+			// This is a very special case - normally there's basically no way to "new up" a Type instance via the "new" operator.
+			// The linker and analyzer see an unknown value and thus warns that it doesn't fulfill the All annotation.
+			[ExpectedWarning ("IL2062", nameof (TestAllPropagated))]
 			public static void Test ()
 			{
 				TestAllPropagated (new TestSystemTypeBase ());
