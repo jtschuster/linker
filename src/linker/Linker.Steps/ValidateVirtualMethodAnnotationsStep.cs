@@ -21,18 +21,15 @@ namespace Mono.Linker.Steps
 					}
 				}
 
-				var overrides = annotations.GetOverrides (method);
-				if (overrides != null) {
-					foreach (var overrideInformation in overrides) {
-						// Skip validation for cases where both base and override are in the list, we will validate the edge
-						// when validating the override from the list.
-						// This avoids validating the edge twice (it would produce the same warning twice)
-						if (annotations.VirtualMethodsWithAnnotationsToValidate.Contains (overrideInformation.Override))
-							continue;
+				foreach (var overrideInformation in annotations.GetOverrides (method)) {
+					// Skip validation for cases where both base and override are in the list, we will validate the edge
+					// when validating the override from the list.
+					// This avoids validating the edge twice (it would produce the same warning twice)
+					if (annotations.VirtualMethodsWithAnnotationsToValidate.Contains (overrideInformation.Override))
+						continue;
 
-						annotations.FlowAnnotations.ValidateMethodAnnotationsAreSame (overrideInformation.Override, method);
-						ValidateMethodRequiresUnreferencedCodeAreSame (overrideInformation.Override, method);
-					}
+					annotations.FlowAnnotations.ValidateMethodAnnotationsAreSame (overrideInformation.Override, method);
+					ValidateMethodRequiresUnreferencedCodeAreSame (overrideInformation.Override, method);
 				}
 			}
 		}

@@ -581,11 +581,8 @@ namespace Mono.Linker.Steps
 		{
 			foreach ((MethodDefinition method, MarkScopeStack.Scope scope) in _static_interface_methods) {
 				using (ScopeStack.PushScope (scope)) {
-					var overrides = Annotations.GetOverrides (method);
-					if (overrides != null) {
-						foreach (OverrideInformation @override in overrides)
-							ProcessOverride (@override);
-					}
+					foreach (OverrideInformation @override in Annotations.GetOverrides (method))
+						ProcessOverride (@override);
 				}
 			}
 		}
@@ -697,18 +694,11 @@ namespace Mono.Linker.Steps
 		{
 			Annotations.EnqueueVirtualMethod (method);
 
-			var overrides = Annotations.GetOverrides (method);
-			if (overrides != null) {
-				foreach (OverrideInformation @override in overrides)
-					ProcessOverride (@override);
-			}
+			foreach (OverrideInformation @override in Annotations.GetOverrides (method))
+				ProcessOverride (@override);
 
-			var defaultImplementations = Annotations.GetDefaultInterfaceImplementations (method);
-			if (defaultImplementations != null) {
-				foreach (var defaultImplementationInfo in defaultImplementations) {
-					ProcessDefaultImplementation (defaultImplementationInfo.InstanceType, defaultImplementationInfo.ProvidingInterface);
-				}
-			}
+			foreach (var defaultImplementationInfo in Annotations.GetDefaultInterfaceImplementations (method))
+				ProcessDefaultImplementation (defaultImplementationInfo.InstanceType, defaultImplementationInfo.ProvidingInterface);
 		}
 
 		void ProcessOverride (OverrideInformation overrideInformation)

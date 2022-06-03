@@ -34,6 +34,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using ILLink.Shared.TrimAnalysis;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
@@ -436,17 +437,27 @@ namespace Mono.Linker
 			return public_api.Contains (provider);
 		}
 
+		private static IEnumerable<T> DeNullifyIEnumerable<T>(IEnumerable<T>? iterator)
+		{
+			if (iterator is null)
+				yield break;
+			else {
+				foreach (var item in iterator)
+					yield return item;
+			}
+		}
+
 		/// <summary>
 		/// Returns an IEnumerable of the methods that override this method. Note this is different than <see cref="MethodDefinition.Overrides"/>, which returns the MethodImpl's
 		/// </summary>
-		public IEnumerable<OverrideInformation>? GetOverrides (MethodDefinition method)
+		public IEnumerable<OverrideInformation> GetOverrides (MethodDefinition method)
 		{
-			return TypeMapInfo.GetOverrides (method);
+			return DeNullifyIEnumerable(TypeMapInfo.GetOverrides (method));
 		}
 
-		public IEnumerable<(TypeDefinition InstanceType, InterfaceImplementation ProvidingInterface)>? GetDefaultInterfaceImplementations (MethodDefinition method)
+		public IEnumerable<(TypeDefinition InstanceType, InterfaceImplementation ProvidingInterface)> GetDefaultInterfaceImplementations (MethodDefinition method)
 		{
-			return TypeMapInfo.GetDefaultInterfaceImplementations (method);
+			return DeNullifyIEnumerable(TypeMapInfo.GetDefaultInterfaceImplementations (method));
 		}
 
 		public List<MethodDefinition>? GetBaseMethods (MethodDefinition method)
