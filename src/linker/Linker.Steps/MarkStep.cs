@@ -60,6 +60,7 @@ namespace Mono.Linker.Steps
 
 		protected Queue<(MethodDefinition, DependencyInfo, MessageOrigin)> _methods;
 		protected List<(MethodDefinition, MarkScopeStack.Scope)> _virtual_methods;
+		protected List<(MethodDefinition, MarkScopeStack.Scope)> _static_interface_methods;
 		protected Queue<AttributeProviderPair> _assemblyLevelAttributes;
 		readonly List<AttributeProviderPair> _ivt_attributes;
 		protected Queue<(AttributeProviderPair, DependencyInfo, MarkScopeStack.Scope)> _lateMarkedAttributes;
@@ -470,6 +471,7 @@ namespace Mono.Linker.Steps
 			while (!QueueIsEmpty ()) {
 				ProcessQueue ();
 				ProcessVirtualMethods ();
+				ProcessStaticInterfaceMethods ();
 				ProcessMarkedTypesWithInterfaces ();
 				ProcessDynamicCastableImplementationInterfaces ();
 				ProcessPendingBodies ();
@@ -575,9 +577,22 @@ namespace Mono.Linker.Steps
 			}
 		}
 
+		void ProcessStaticAbstractMethods ()
+		{
+			foreach ((MethodDefinition method, MarkScopeStack.Scope scope) in _static_interface_methods) {
+				using (ScopeStack.PushScope (scope)) {
+					var overrides = Annotations.GetOverrides (method);
+					if (overrides != null) {
+						foreach (OverrideInformation @override in overrides)
+							ProcessOverride (@override);
+					}
+				}
+			}
+		}
+
 		/// <summary>
 		/// Does extra handling of marked types that have interfaces when it's necessary to know what types are marked or instantiated.
-		/// e.g. Marks the "implements interface" annotations and removes override annotations for static interface methods.
+		/// Right now it only marks the "implements interface" annotations and removes override annotations for static interface methods.
 		/// </summary>
 		void ProcessMarkedTypesWithInterfaces ()
 		{
@@ -3024,7 +3039,7 @@ namespace Mono.Linker.Steps
 				}
 			}
 
-			// Mark overridden methods except for static interface methods
+			// Mark overridden methods and interface implementations except for static interface methods
 			// This will not mark implicit interface methods because they do not have a MethodImpl and aren't in the .Overrides
 			if (method.HasOverrides) {
 				foreach (MethodReference ov in method.Overrides) {
@@ -3039,12 +3054,9 @@ namespace Mono.Linker.Steps
 				}
 			}
 
-			if (method.IsStatic && method.DeclaringType.IsInterface) {
-				_virtual_methods.Add ((method, ScopeStack.CurrentScope));
-			}
-
 			MarkMethodSpecialCustomAttributes (method);
-			if (method.IsVirtual)
+			if (method.IsVirtual
+				|| method.IsStatic && method.DeclaringType.IsInterface)
 				_virtual_methods.Add ((method, ScopeStack.CurrentScope));
 
 			MarkNewCodeDependencies (method);
