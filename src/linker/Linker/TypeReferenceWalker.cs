@@ -3,6 +3,9 @@
 
 using System;
 using System.Collections.Generic;
+using Mono.Cecil;
+using Mono.Cecil.Cil;
+using Mono.Collections.Generic;
 
 namespace Mono.Linker
 {
@@ -46,7 +49,7 @@ namespace Mono.Linker
 
 		protected virtual void ProcessExtra () { }
 
-		static void WalkScopes (TypeDefinition typeDefinition)
+		void WalkScopes (TypeDefinition typeDefinition)
 		{
 			WalkCustomAttributesTypesScopes (typeDefinition);
 			WalkSecurityAttributesTypesScopes (typeDefinition);
@@ -116,7 +119,7 @@ namespace Mono.Linker
 			}
 		}
 
-		static void WalkTypeScope (Collection<GenericParameter> genericParameters)
+		void WalkTypeScope (Collection<GenericParameter> genericParameters)
 		{
 			foreach (var gp in genericParameters) {
 				WalkCustomAttributesTypesScopes (gp);
@@ -125,7 +128,7 @@ namespace Mono.Linker
 			}
 		}
 
-		static void WalkTypeScope (Collection<GenericParameterConstraint> constraints)
+		void WalkTypeScope (Collection<GenericParameterConstraint> constraints)
 		{
 			foreach (var gc in constraints) {
 				WalkCustomAttributesTypesScopes (gc);
@@ -133,7 +136,7 @@ namespace Mono.Linker
 			}
 		}
 
-		static void WalkTypeScope (Collection<ParameterDefinition> parameters)
+		void WalkTypeScope (Collection<ParameterDefinition> parameters)
 		{
 			foreach (var p in parameters) {
 				WalkCustomAttributesTypesScopes (p);
@@ -142,7 +145,7 @@ namespace Mono.Linker
 			}
 		}
 
-		static void WalkTypeScope (Collection<ExportedType> forwarders)
+		void WalkTypeScope (Collection<ExportedType> forwarders)
 		{
 			foreach (var f in forwarders)
 				ProcessExportedType (f);
@@ -203,7 +206,7 @@ namespace Mono.Linker
 			}
 		}
 
-		static void WalkMethodReference (MethodReference mr)
+		void WalkMethodReference (MethodReference mr)
 		{
 			WalkScopeOfTypeReference (mr.ReturnType);
 			WalkScopeOfTypeReference (mr.DeclaringType);
@@ -218,13 +221,13 @@ namespace Mono.Linker
 			}
 		}
 
-		static void WalkFieldReference (FieldReference fr)
+		void WalkFieldReference (FieldReference fr)
 		{
 			WalkScopeOfTypeReference (fr.FieldType);
 			WalkScopeOfTypeReference (fr.DeclaringType);
 		}
 
-		static void WalkMarshalInfoTypeScope (IMarshalInfoProvider provider)
+		void WalkMarshalInfoTypeScope (IMarshalInfoProvider provider)
 		{
 			if (!provider.HasMarshalInfo)
 				return;
@@ -233,7 +236,7 @@ namespace Mono.Linker
 				WalkScopeOfTypeReference (cmi.ManagedType);
 		}
 
-		static void WalkCustomAttributesTypesScopes (ICustomAttributeProvider customAttributeProvider)
+		void WalkCustomAttributesTypesScopes (ICustomAttributeProvider customAttributeProvider)
 		{
 			if (!customAttributeProvider.HasCustomAttributes)
 				return;
@@ -242,7 +245,7 @@ namespace Mono.Linker
 				WalkForwardedTypesScope (ca);
 		}
 
-		static void WalkSecurityAttributesTypesScopes (ISecurityDeclarationProvider securityAttributeProvider)
+		void WalkSecurityAttributesTypesScopes (ISecurityDeclarationProvider securityAttributeProvider)
 		{
 			if (!securityAttributeProvider.HasSecurityDeclarations)
 				return;
@@ -256,7 +259,7 @@ namespace Mono.Linker
 			}
 		}
 
-		static void WalkForwardedTypesScope (CustomAttribute attribute)
+		void WalkForwardedTypesScope (CustomAttribute attribute)
 		{
 			WalkMethodReference (attribute.Constructor);
 
@@ -276,7 +279,7 @@ namespace Mono.Linker
 			}
 		}
 
-		static void WalkForwardedTypesScope (SecurityAttribute attribute)
+		void WalkForwardedTypesScope (SecurityAttribute attribute)
 		{
 			if (attribute.HasFields) {
 				foreach (var field in attribute.Fields)

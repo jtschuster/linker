@@ -3,6 +3,7 @@
 
 using System.IO;
 using ILLink.Shared;
+using Mono.Cecil;
 
 namespace Mono.Linker.Steps
 {
@@ -122,7 +123,7 @@ namespace Mono.Linker.Steps
 			return assembly;
 		}
 
-		static void MarkAndPreserve (AssemblyDefinition assembly, TypePreserveMembers preserve)
+		void MarkAndPreserve (AssemblyDefinition assembly, TypePreserveMembers preserve)
 		{
 			var module = assembly.MainModule;
 			if (module.HasExportedTypes)

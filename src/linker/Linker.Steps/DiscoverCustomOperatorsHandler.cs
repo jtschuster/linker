@@ -4,6 +4,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using ILLink.Shared.TypeSystemProxy;
+using Mono.Cecil;
 
 namespace Mono.Linker.Steps
 {

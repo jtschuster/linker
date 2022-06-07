@@ -7,6 +7,8 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Mono.Cecil;
+using Mono.Cecil.Cil;
 using Mono.Linker.Tests.Cases.Expectations.Assertions;
 using Mono.Linker.Tests.Cases.Expectations.Metadata;
 using Mono.Linker.Tests.Extensions;
@@ -623,7 +625,7 @@ namespace Mono.Linker.Tests.TestCasesRunner
 			Assert.That (assembly.MainModule.Resources.Select (r => r.Name), Has.No.Member (resourceName));
 		}
 
-		static void VerifyKeptAllTypesAndMembersInAssembly (AssemblyDefinition linked)
+		void VerifyKeptAllTypesAndMembersInAssembly (AssemblyDefinition linked)
 		{
 			var original = ResolveOriginalsAssembly (linked.MainModule.Assembly.Name.Name);
 

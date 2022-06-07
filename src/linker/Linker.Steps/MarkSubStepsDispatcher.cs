@@ -4,6 +4,9 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 
+using Mono.Cecil;
+using Mono.Collections.Generic;
+
 namespace Mono.Linker.Steps
 {
 	//

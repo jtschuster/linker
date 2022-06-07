@@ -4,6 +4,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using ILLink.Shared.TypeSystemProxy;
+using Mono.Cecil;
 using Mono.Linker.Tests.Extensions;
 using Mono.Linker.Tests.TestCases;
 using Mono.Linker.Tests.TestCasesRunner;

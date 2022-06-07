@@ -31,6 +31,7 @@
 
 using System;
 using System.Diagnostics;
+using Mono.Cecil;
 
 namespace Mono.Linker.Steps
 {

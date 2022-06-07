@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using Mono.Cecil;
 using TLens.Analyzers;
 
 namespace TLens
@@ -32,7 +33,7 @@ namespace TLens
 			foreach (var a in analyzers) {
 				foreach (var assembly in assemblies) {
 					try {
-						Analyzer.ProcessAssembly (assembly);
+						a.ProcessAssembly (assembly);
 					} catch (Exception e) {
 						throw new ApplicationException ($"Internal error when analyzing '{assembly.FullName}' assembly with '{a.GetType ()}'", e);
 					}

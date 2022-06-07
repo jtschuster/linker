@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using Mono.Cecil;
 
 namespace TLens.Analyzers
 {
@@ -9,7 +10,7 @@ namespace TLens.Analyzers
 	{
 		protected virtual bool RequiredMethodBody => true;
 
-		public static void ProcessAssembly (AssemblyDefinition assembly)
+		public void ProcessAssembly (AssemblyDefinition assembly)
 		{
 			foreach (var type in assembly.MainModule.Types) {
 				WalkType (type);

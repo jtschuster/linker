@@ -9,6 +9,9 @@ using ILLink.Shared;
 using ILLink.Shared.DataFlow;
 using ILLink.Shared.TrimAnalysis;
 using ILLink.Shared.TypeSystemProxy;
+using Mono.Cecil;
+using Mono.Cecil.Cil;
+using Mono.Collections.Generic;
 using LocalVariableStore = System.Collections.Generic.Dictionary<Mono.Cecil.Cil.VariableDefinition, Mono.Linker.Dataflow.ValueBasicBlockPair>;
 using MultiValue = ILLink.Shared.DataFlow.ValueSet<ILLink.Shared.DataFlow.SingleValue>;
 
@@ -716,7 +719,7 @@ namespace Mono.Linker.Dataflow
 			// If the targetValue is MethodThisValue do nothing - it should never happen really, and if it does, there's nothing we can track there
 		}
 
-		private static void ScanLdloc (
+		private void ScanLdloc (
 			Instruction operation,
 			Stack<StackSlot> currentStack,
 			MethodBody methodBody,
@@ -779,7 +782,7 @@ namespace Mono.Linker.Dataflow
 			}
 		}
 
-		private static void ScanStloc (
+		private void ScanStloc (
 			Instruction operation,
 			Stack<StackSlot> currentStack,
 			MethodBody methodBody,
@@ -796,7 +799,7 @@ namespace Mono.Linker.Dataflow
 			StoreMethodLocalValue (locals, valueToStore.Value, localDef, curBasicBlock);
 		}
 
-		private static void ScanIndirectStore (
+		private void ScanIndirectStore (
 			Instruction operation,
 			Stack<StackSlot> currentStack,
 			MethodBody methodBody,
@@ -1090,7 +1093,7 @@ namespace Mono.Linker.Dataflow
 			}
 		}
 
-		private static void ScanStelem (
+		private void ScanStelem (
 			Instruction operation,
 			Stack<StackSlot> currentStack,
 			MethodBody methodBody,
@@ -1112,7 +1115,7 @@ namespace Mono.Linker.Dataflow
 			}
 		}
 
-		private static void ScanLdelem (
+		private void ScanLdelem (
 			Instruction operation,
 			Stack<StackSlot> currentStack,
 			MethodBody methodBody,

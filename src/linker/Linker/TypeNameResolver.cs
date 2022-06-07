@@ -7,6 +7,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Reflection.Runtime.TypeParsing;
 using ILLink.Shared;
 using ILLink.Shared.TrimAnalysis;
+using Mono.Cecil;
 
 namespace Mono.Linker
 {

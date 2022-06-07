@@ -3,6 +3,7 @@
 
 using System;
 using ILLink.Shared.TypeSystemProxy;
+using Mono.Cecil;
 
 namespace Mono.Linker
 {

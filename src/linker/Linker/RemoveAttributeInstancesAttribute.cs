@@ -3,6 +3,8 @@
 
 using System;
 using System.Linq;
+using Mono.Cecil;
+using Mono.Collections.Generic;
 
 namespace Mono.Linker
 {

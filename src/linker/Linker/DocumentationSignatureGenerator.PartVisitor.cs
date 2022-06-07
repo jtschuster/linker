@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
+using Mono.Cecil;
 
 namespace Mono.Linker
 {
@@ -25,7 +26,7 @@ namespace Mono.Linker
 			{
 			}
 
-			public static void VisitArrayType (ArrayType arrayType, StringBuilder builder, ITryResolveMetadata resolver)
+			public void VisitArrayType (ArrayType arrayType, StringBuilder builder, ITryResolveMetadata resolver)
 			{
 				VisitTypeReference (arrayType.ElementType, builder, resolver);
 
@@ -47,13 +48,13 @@ namespace Mono.Linker
 				}
 			}
 
-			public static void VisitField (FieldDefinition field, StringBuilder builder, ITryResolveMetadata resolver)
+			public void VisitField (FieldDefinition field, StringBuilder builder, ITryResolveMetadata resolver)
 			{
 				VisitTypeReference (field.DeclaringType, builder, resolver);
 				builder.Append ('.').Append (field.Name);
 			}
 
-			private static void VisitParameters (IEnumerable<ParameterDefinition> parameters, bool isVararg, StringBuilder builder, ITryResolveMetadata resolver)
+			private void VisitParameters (IEnumerable<ParameterDefinition> parameters, bool isVararg, StringBuilder builder, ITryResolveMetadata resolver)
 			{
 				builder.Append ('(');
 				bool needsComma = false;
@@ -76,7 +77,7 @@ namespace Mono.Linker
 				builder.Append (')');
 			}
 
-			public static void VisitMethodDefinition (MethodDefinition method, StringBuilder builder, ITryResolveMetadata resolver)
+			public void VisitMethodDefinition (MethodDefinition method, StringBuilder builder, ITryResolveMetadata resolver)
 			{
 				VisitTypeReference (method.DeclaringType, builder, resolver);
 				builder.Append ('.').Append (GetEscapedMetadataName (method));
@@ -93,7 +94,7 @@ namespace Mono.Linker
 				}
 			}
 
-			public static void VisitProperty (PropertyDefinition property, StringBuilder builder, ITryResolveMetadata resolver)
+			public void VisitProperty (PropertyDefinition property, StringBuilder builder, ITryResolveMetadata resolver)
 			{
 				VisitTypeReference (property.DeclaringType, builder, resolver);
 				builder.Append ('.').Append (GetEscapedMetadataName (property));
@@ -102,7 +103,7 @@ namespace Mono.Linker
 					VisitParameters (property.Parameters, false, builder, resolver);
 			}
 
-			public static void VisitEvent (EventDefinition evt, StringBuilder builder, ITryResolveMetadata resolver)
+			public void VisitEvent (EventDefinition evt, StringBuilder builder, ITryResolveMetadata resolver)
 			{
 				VisitTypeReference (evt.DeclaringType, builder, resolver);
 				builder.Append ('.').Append (GetEscapedMetadataName (evt));
@@ -188,13 +189,13 @@ namespace Mono.Linker
 				builder.Append ('}');
 			}
 
-			public static void VisitPointerType (PointerType pointerType, StringBuilder builder, ITryResolveMetadata resolver)
+			public void VisitPointerType (PointerType pointerType, StringBuilder builder, ITryResolveMetadata resolver)
 			{
 				VisitTypeReference (pointerType.ElementType, builder, resolver);
 				builder.Append ('*');
 			}
 
-			public static void VisitByReferenceType (ByReferenceType byReferenceType, StringBuilder builder, ITryResolveMetadata resolver)
+			public void VisitByReferenceType (ByReferenceType byReferenceType, StringBuilder builder, ITryResolveMetadata resolver)
 			{
 				VisitTypeReference (byReferenceType.ElementType, builder, resolver);
 				builder.Append ('@');

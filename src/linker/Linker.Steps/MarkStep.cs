@@ -40,6 +40,9 @@ using System.Text.RegularExpressions;
 using ILLink.Shared;
 using ILLink.Shared.TrimAnalysis;
 using ILLink.Shared.TypeSystemProxy;
+using Mono.Cecil;
+using Mono.Cecil.Cil;
+using Mono.Collections.Generic;
 using Mono.Linker.Dataflow;
 
 namespace Mono.Linker.Steps
@@ -441,7 +444,7 @@ namespace Mono.Linker.Steps
 
 			// Setup empty scope - there has to be some scope setup since we're doing marking below
 			// but there's no "origin" right now (command line is the origin really)
-			using var localScope = ScopeStack.PushScope (new MessageOrigin (null));
+			using var localScope = ScopeStack.PushScope (new MessageOrigin ((ICustomAttributeProvider?) null));
 
 			// Beware: this works on loaded assemblies, not marked assemblies, so it should not be tied to marking.
 			// We could further optimize this to only iterate through assemblies if the last mark iteration loaded
@@ -1186,7 +1189,7 @@ namespace Mono.Linker.Steps
 			return true;
 		}
 
-		protected static void MarkSecurityDeclarations (ISecurityDeclarationProvider provider, in DependencyInfo reason)
+		protected void MarkSecurityDeclarations (ISecurityDeclarationProvider provider, in DependencyInfo reason)
 		{
 			// most security declarations are removed (if linked) but user code might still have some
 			// and if the attributes references types then they need to be marked too
@@ -1221,7 +1224,7 @@ namespace Mono.Linker.Steps
 			MarkCustomAttributeFields (sa, type);
 		}
 
-		protected static void MarkCustomAttributeProperties (ICustomAttribute ca, TypeDefinition attribute)
+		protected void MarkCustomAttributeProperties (ICustomAttribute ca, TypeDefinition attribute)
 		{
 			if (!ca.HasProperties)
 				return;
@@ -1258,7 +1261,7 @@ namespace Mono.Linker.Steps
 			return null;
 		}
 
-		protected static void MarkCustomAttributeFields (ICustomAttribute ca, TypeDefinition attribute)
+		protected void MarkCustomAttributeFields (ICustomAttribute ca, TypeDefinition attribute)
 		{
 			if (!ca.HasFields)
 				return;
@@ -1467,7 +1470,7 @@ namespace Mono.Linker.Steps
 			}
 		}
 
-		static void ProcessModuleType (AssemblyDefinition assembly)
+		void ProcessModuleType (AssemblyDefinition assembly)
 		{
 			// The <Module> type may have an initializer, in which case we want to keep it.
 			TypeDefinition? moduleType = assembly.MainModule.Types.FirstOrDefault (t => t.MetadataToken.RID == 1);
@@ -1651,7 +1654,7 @@ namespace Mono.Linker.Steps
 			}
 
 			if (reason.Kind != DependencyKind.DynamicallyAccessedMemberOnType &&
-				AnnotationStore.DoesFieldRequireUnreferencedCode (field, out RequiresUnreferencedCodeAttribute? requiresUnreferencedCodeAttribute) &&
+				Annotations.DoesFieldRequireUnreferencedCode (field, out RequiresUnreferencedCodeAttribute? requiresUnreferencedCodeAttribute) &&
 				!Annotations.ShouldSuppressAnalysisWarningsForRequiresUnreferencedCode (origin.Provider))
 				ReportRequiresUnreferencedCode (field.GetDisplayName (), requiresUnreferencedCodeAttribute, new DiagnosticContext (origin, diagnosticsEnabled: true, Context));
 
@@ -1660,7 +1663,7 @@ namespace Mono.Linker.Steps
 			case DependencyKind.DynamicDependency:
 			case DependencyKind.DynamicallyAccessedMember:
 			case DependencyKind.InteropMethodDependency:
-				if (FlowAnnotations.ShouldWarnWhenAccessedForReflection (field) &&
+				if (Annotations.FlowAnnotations.ShouldWarnWhenAccessedForReflection (field) &&
 					!Annotations.ShouldSuppressAnalysisWarningsForRequiresUnreferencedCode (origin.Provider))
 					Context.LogWarning (origin, DiagnosticId.DynamicallyAccessedMembersFieldAccessedViaReflection, field.GetDisplayName ());
 
@@ -2198,7 +2201,7 @@ namespace Mono.Linker.Steps
 			return count;
 		}
 
-		static void MarkSoapHeader (MethodDefinition method, CustomAttribute attribute)
+		void MarkSoapHeader (MethodDefinition method, CustomAttribute attribute)
 		{
 			if (!TryGetStringArgument (attribute, out string? member_name))
 				return;
@@ -2267,7 +2270,7 @@ namespace Mono.Linker.Steps
 				MarkGenericParameter (parameter);
 		}
 
-		static void MarkGenericParameter (GenericParameter parameter)
+		void MarkGenericParameter (GenericParameter parameter)
 		{
 			MarkCustomAttributes (parameter, new DependencyInfo (DependencyKind.GenericParameterCustomAttribute, parameter.Owner));
 			if (!parameter.HasConstraints)
@@ -2362,7 +2365,7 @@ namespace Mono.Linker.Steps
 				parameters[1].ParameterType.Name == "StreamingContext";
 		}
 
-		internal protected static bool MarkMethodsIf (Collection<MethodDefinition> methods, Func<MethodDefinition, bool> predicate, in DependencyInfo reason, in MessageOrigin origin)
+		protected internal bool MarkMethodsIf (Collection<MethodDefinition> methods, Func<MethodDefinition, bool> predicate, in DependencyInfo reason, in MessageOrigin origin)
 		{
 			bool marked = false;
 			foreach (MethodDefinition method in methods) {
@@ -2374,7 +2377,7 @@ namespace Mono.Linker.Steps
 			return marked;
 		}
 
-		protected static MethodDefinition? MarkMethodIf (Collection<MethodDefinition> methods, Func<MethodDefinition, bool> predicate, in DependencyInfo reason, in MessageOrigin origin)
+		protected MethodDefinition? MarkMethodIf (Collection<MethodDefinition> methods, Func<MethodDefinition, bool> predicate, in DependencyInfo reason, in MessageOrigin origin)
 		{
 			foreach (MethodDefinition method in methods) {
 				if (predicate (method)) {
@@ -2532,7 +2535,7 @@ namespace Mono.Linker.Steps
 			}
 		}
 
-		static void MarkModifierType (IModifierType mod)
+		void MarkModifierType (IModifierType mod)
 		{
 			MarkType (mod.ModifierType, new DependencyInfo (DependencyKind.ModifierType, mod));
 		}
@@ -2886,7 +2889,7 @@ namespace Mono.Linker.Steps
 
 			CheckAndReportRequiresUnreferencedCode (method, new DiagnosticContext (ScopeStack.CurrentScope.Origin, diagnosticsEnabled: true, Context));
 
-			if (FlowAnnotations.ShouldWarnWhenAccessedForReflection (method)) {
+			if (Annotations.FlowAnnotations.ShouldWarnWhenAccessedForReflection (method)) {
 				// If the current scope has analysis warnings suppressed, don't generate any
 				if (Annotations.ShouldSuppressAnalysisWarningsForRequiresUnreferencedCode (ScopeStack.CurrentScope.Origin.Provider))
 					return;
@@ -3062,7 +3065,7 @@ namespace Mono.Linker.Steps
 		{
 		}
 
-		static void MarkImplicitlyUsedFields (TypeDefinition type)
+		void MarkImplicitlyUsedFields (TypeDefinition type)
 		{
 			if (type?.HasFields != true)
 				return;

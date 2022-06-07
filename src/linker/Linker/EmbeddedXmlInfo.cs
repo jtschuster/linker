@@ -5,6 +5,7 @@ using System;
 using System.Linq;
 using System.Xml;
 using ILLink.Shared;
+using Mono.Cecil;
 using Mono.Linker.Steps;
 
 namespace Mono.Linker

@@ -5,6 +5,8 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using Mono.Cecil;
+using Mono.Cecil.Cil;
 
 namespace Mono.Linker
 {
@@ -169,7 +171,7 @@ namespace Mono.Linker
 			return false;
 		}
 
-		static void AddFromGenericInstance (HashSet<TypeDefinition> set, IGenericInstance instance)
+		void AddFromGenericInstance (HashSet<TypeDefinition> set, IGenericInstance instance)
 		{
 			if (!instance.HasGenericArguments)
 				return;
@@ -178,7 +180,7 @@ namespace Mono.Linker
 				AddIfResolved (set, genericArgument);
 		}
 
-		static void AddFromGenericParameterProvider (HashSet<TypeDefinition> set, IGenericParameterProvider provider)
+		void AddFromGenericParameterProvider (HashSet<TypeDefinition> set, IGenericParameterProvider provider)
 		{
 			if (!provider.HasGenericParameters)
 				return;

@@ -8,6 +8,8 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using ILLink.Shared.DataFlow;
 using ILLink.Shared.TypeSystemProxy;
+using Mono.Cecil;
+using Mono.Cecil.Cil;
 using Mono.Linker;
 using Mono.Linker.Dataflow;
 
@@ -25,10 +27,10 @@ namespace ILLink.Shared.TrimAnalysis
 			_hierarchyInfo = new TypeHierarchyCache (context);
 		}
 
-		public static bool RequiresDataFlowAnalysis (MethodDefinition method) =>
+		public bool RequiresDataFlowAnalysis (MethodDefinition method) =>
 			GetAnnotations (method.DeclaringType).TryGetAnnotation (method, out _);
 
-		public static bool RequiresDataFlowAnalysis (FieldDefinition field) =>
+		public bool RequiresDataFlowAnalysis (FieldDefinition field) =>
 			GetAnnotations (field.DeclaringType).TryGetAnnotation (field, out _);
 
 		public bool RequiresDataFlowAnalysis (GenericParameter genericParameter) =>
@@ -39,7 +41,7 @@ namespace ILLink.Shared.TrimAnalysis
 		/// </summary>
 		/// <param name="parameterIndex">Parameter index in the IL sense. Parameter 0 on instance methods is `this`.</param>
 		/// <returns></returns>
-		public static DynamicallyAccessedMemberTypes GetParameterAnnotation (MethodDefinition method, int parameterIndex)
+		public DynamicallyAccessedMemberTypes GetParameterAnnotation (MethodDefinition method, int parameterIndex)
 		{
 			if (GetAnnotations (method.DeclaringType).TryGetAnnotation (method, out var annotation) &&
 				annotation.ParameterAnnotations != null)
@@ -48,7 +50,7 @@ namespace ILLink.Shared.TrimAnalysis
 			return DynamicallyAccessedMemberTypes.None;
 		}
 
-		public static DynamicallyAccessedMemberTypes GetReturnParameterAnnotation (MethodDefinition method)
+		public DynamicallyAccessedMemberTypes GetReturnParameterAnnotation (MethodDefinition method)
 		{
 			if (GetAnnotations (method.DeclaringType).TryGetAnnotation (method, out var annotation))
 				return annotation.ReturnParameterAnnotation;
@@ -56,7 +58,7 @@ namespace ILLink.Shared.TrimAnalysis
 			return DynamicallyAccessedMemberTypes.None;
 		}
 
-		public static DynamicallyAccessedMemberTypes GetFieldAnnotation (FieldDefinition field)
+		public DynamicallyAccessedMemberTypes GetFieldAnnotation (FieldDefinition field)
 		{
 			if (GetAnnotations (field.DeclaringType).TryGetAnnotation (field, out var annotation))
 				return annotation.Annotation;
@@ -92,7 +94,7 @@ namespace ILLink.Shared.TrimAnalysis
 			return DynamicallyAccessedMemberTypes.None;
 		}
 
-		public static bool ShouldWarnWhenAccessedForReflection (MethodDefinition method)
+		public bool ShouldWarnWhenAccessedForReflection (MethodDefinition method)
 		{
 			if (!GetAnnotations (method.DeclaringType).TryGetAnnotation (method, out var annotation))
 				return false;
@@ -462,7 +464,7 @@ namespace ILLink.Shared.TrimAnalysis
 			return true;
 		}
 
-		internal static void ValidateMethodAnnotationsAreSame (MethodDefinition method, MethodDefinition baseMethod)
+		internal void ValidateMethodAnnotationsAreSame (MethodDefinition method, MethodDefinition baseMethod)
 		{
 			GetAnnotations (method.DeclaringType).TryGetAnnotation (method, out var methodAnnotations);
 			GetAnnotations (baseMethod.DeclaringType).TryGetAnnotation (baseMethod, out var baseMethodAnnotations);
@@ -522,7 +524,7 @@ namespace ILLink.Shared.TrimAnalysis
 			}
 		}
 
-		static void ValidateMethodGenericParametersHaveNoAnnotations (DynamicallyAccessedMemberTypes[] genericParameterAnnotations, MethodDefinition method, MethodDefinition baseMethod, IMemberDefinition origin)
+		void ValidateMethodGenericParametersHaveNoAnnotations (DynamicallyAccessedMemberTypes[] genericParameterAnnotations, MethodDefinition method, MethodDefinition baseMethod, IMemberDefinition origin)
 		{
 			for (int genericParameterIndex = 0; genericParameterIndex < genericParameterAnnotations.Length; genericParameterIndex++) {
 				if (genericParameterAnnotations[genericParameterIndex] != DynamicallyAccessedMemberTypes.None) {

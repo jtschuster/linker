@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using ILLink.Shared;
+using Mono.Cecil;
 using Mono.Linker.Steps;
 
 namespace Mono.Linker.Dataflow

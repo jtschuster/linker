@@ -11,6 +11,7 @@ using System.Xml.XPath;
 using ILLink.Shared;
 using ILLink.Shared.TrimAnalysis;
 using ILLink.Shared.TypeSystemProxy;
+using Mono.Cecil;
 
 namespace Mono.Linker.Steps
 {
@@ -219,7 +220,7 @@ namespace Mono.Linker.Steps
 			}
 		}
 
-		static CustomAttributeArgument[] ReadCustomAttributeArguments (XPathNavigator nav, TypeDefinition attributeType)
+		CustomAttributeArgument[] ReadCustomAttributeArguments (XPathNavigator nav, TypeDefinition attributeType)
 		{
 			var args = new ArrayBuilder<CustomAttributeArgument> ();
 

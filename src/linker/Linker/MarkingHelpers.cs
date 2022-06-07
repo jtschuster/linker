@@ -1,6 +1,8 @@
 // Copyright (c) .NET Foundation and contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Mono.Cecil;
+
 namespace Mono.Linker
 {
 	public class MarkingHelpers
@@ -12,7 +14,7 @@ namespace Mono.Linker
 			_context = context;
 		}
 
-		public static void MarkMatchingExportedType (TypeDefinition typeToMatch, AssemblyDefinition assembly, in DependencyInfo reason, in MessageOrigin origin)
+		public void MarkMatchingExportedType (TypeDefinition typeToMatch, AssemblyDefinition assembly, in DependencyInfo reason, in MessageOrigin origin)
 		{
 			if (typeToMatch == null || assembly == null)
 				return;

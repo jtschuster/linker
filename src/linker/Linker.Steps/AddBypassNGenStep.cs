@@ -2,6 +2,9 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Diagnostics;
+using Mono.Cecil;
+using Mono.Cecil.Cil;
+using Mono.Collections.Generic;
 
 namespace Mono.Linker.Steps
 {
@@ -46,7 +49,7 @@ namespace Mono.Linker.Steps
 				}
 		}
 
-		static void ProcessNestedTypes (TypeDefinition type)
+		void ProcessNestedTypes (TypeDefinition type)
 		{
 			for (int i = 0; i < type.NestedTypes.Count; i++) {
 				var nested = type.NestedTypes[i];

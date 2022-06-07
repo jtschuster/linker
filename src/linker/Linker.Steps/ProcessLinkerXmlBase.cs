@@ -12,6 +12,7 @@ using System.Xml;
 using System.Xml.Linq;
 using System.Xml.XPath;
 using ILLink.Shared;
+using Mono.Cecil;
 
 namespace Mono.Linker.Steps
 {
