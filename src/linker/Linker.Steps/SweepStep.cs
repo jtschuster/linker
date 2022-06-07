@@ -34,9 +34,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using Mono.Cecil;
-using Mono.Cecil.Cil;
-using Mono.Collections.Generic;
 
 namespace Mono.Linker.Steps
 {
@@ -295,7 +292,7 @@ namespace Mono.Linker.Steps
 				resources.Remove (resource);
 		}
 
-		bool SweepTypeForwarders (AssemblyDefinition assembly)
+		static bool SweepTypeForwarders (AssemblyDefinition assembly)
 		{
 			return assembly.MainModule.HasExportedTypes &&
 				SweepCollectionMetadata (assembly.MainModule.ExportedTypes);
@@ -357,7 +354,7 @@ namespace Mono.Linker.Steps
 			}
 		}
 
-		protected void SweepGenericParameters (Collection<GenericParameter> genericParameters)
+		protected static void SweepGenericParameters (Collection<GenericParameter> genericParameters)
 		{
 			foreach (var gp in genericParameters) {
 				SweepCustomAttributes (gp);
@@ -435,7 +432,7 @@ namespace Mono.Linker.Steps
 			return removed;
 		}
 
-		protected void SweepCustomAttributeCollection<T> (Collection<T> providers) where T : ICustomAttributeProvider
+		protected static void SweepCustomAttributeCollection<T> (Collection<T> providers) where T : ICustomAttributeProvider
 		{
 			foreach (var provider in providers)
 				SweepCustomAttributes (provider);
@@ -512,7 +509,7 @@ namespace Mono.Linker.Steps
 			}
 		}
 
-		protected void SweepCollectionWithCustomAttributes<T> (IList<T> list) where T : ICustomAttributeProvider
+		protected static void SweepCollectionWithCustomAttributes<T> (IList<T> list) where T : ICustomAttributeProvider
 		{
 			for (int i = 0; i < list.Count; i++)
 				if (ShouldRemove (list[i])) {
@@ -523,7 +520,7 @@ namespace Mono.Linker.Steps
 				}
 		}
 
-		protected bool SweepCollectionMetadata<T> (IList<T> list) where T : IMetadataTokenProvider
+		protected static bool SweepCollectionMetadata<T> (IList<T> list) where T : IMetadataTokenProvider
 		{
 			bool removed = false;
 

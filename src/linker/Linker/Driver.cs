@@ -34,12 +34,10 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
-using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.Loader;
 using System.Text;
 using ILLink.Shared;
-using Mono.Cecil;
 using Mono.Linker.Steps;
 
 namespace Mono.Linker
@@ -790,8 +788,7 @@ namespace Mono.Linker
 				if (throwOnFatalLinkerException)
 					throw;
 				return lex.MessageContainer.Code ?? 1;
-			}
-			catch (ArgumentException) {
+			} catch (ArgumentException) {
 				Context.LogError (null, DiagnosticId.LinkerUnexpectedError);
 				throw;
 			} catch (ResolutionException e) {

@@ -31,8 +31,6 @@
 
 using System.Xml.XPath;
 
-using Mono.Cecil;
-
 namespace Mono.Linker
 {
 

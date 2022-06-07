@@ -9,8 +9,6 @@ using System.Linq;
 using ILLink.Shared;
 using ILLink.Shared.TrimAnalysis;
 using ILLink.Shared.TypeSystemProxy;
-using Mono.Cecil;
-using Mono.Cecil.Cil;
 using Mono.Linker.Steps;
 using MultiValue = ILLink.Shared.DataFlow.ValueSet<ILLink.Shared.DataFlow.SingleValue>;
 
@@ -39,7 +37,7 @@ namespace Mono.Linker.Dataflow
 		public static bool RequiresReflectionMethodBodyScannerForMethodBody (LinkContext context, MethodDefinition methodDefinition)
 		{
 			return Intrinsics.GetIntrinsicIdForMethod (methodDefinition) > IntrinsicId.RequiresReflectionBodyScanner_Sentinel ||
-				context.Annotations.FlowAnnotations.RequiresDataFlowAnalysis (methodDefinition);
+				FlowAnnotations.RequiresDataFlowAnalysis (methodDefinition);
 		}
 
 		public static bool RequiresReflectionMethodBodyScannerForAccess (LinkContext context, FieldReference field)
@@ -92,7 +90,7 @@ namespace Mono.Linker.Dataflow
 		}
 
 		protected override ValueWithDynamicallyAccessedMembers GetMethodParameterValue (MethodDefinition method, int parameterIndex)
-			=> GetMethodParameterValue (method, parameterIndex, _context.Annotations.FlowAnnotations.GetParameterAnnotation (method, parameterIndex));
+			=> GetMethodParameterValue (method, parameterIndex, FlowAnnotations.GetParameterAnnotation (method, parameterIndex));
 
 		ValueWithDynamicallyAccessedMembers GetMethodParameterValue (MethodDefinition method, int parameterIndex, DynamicallyAccessedMemberTypes dynamicallyAccessedMemberTypes)
 		{

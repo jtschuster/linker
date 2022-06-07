@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using Mono.Cecil;
 
 namespace TLens
 {
@@ -23,7 +22,7 @@ namespace TLens
 
 		public ReaderParameters ReaderParameters { get; }
 
-		public void Dispose ()
+		public static void Dispose ()
 		{
 		}
 

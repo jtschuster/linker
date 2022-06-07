@@ -36,8 +36,6 @@ using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using ILLink.Shared;
 using ILLink.Shared.TypeSystemProxy;
-using Mono.Cecil;
-using Mono.Cecil.Cil;
 using Mono.Linker.Steps;
 
 namespace Mono.Linker
@@ -507,7 +505,7 @@ namespace Mono.Linker
 
 		public bool IsOptimizationEnabled (CodeOptimizations optimization, AssemblyDefinition? context)
 		{
-			return Optimizations.IsEnabled (optimization, context);
+			return CodeOptimizationsSettings.IsEnabled (optimization, context);
 		}
 
 		public bool CanApplyOptimization (CodeOptimizations optimization, AssemblyDefinition context)
@@ -929,7 +927,7 @@ namespace Mono.Linker
 
 		public CodeOptimizations Global { get; private set; }
 
-		internal bool IsEnabled (CodeOptimizations optimizations, AssemblyDefinition? context)
+		internal static bool IsEnabled (CodeOptimizations optimizations, AssemblyDefinition? context)
 		{
 			return IsEnabled (optimizations, context?.Name.Name);
 		}

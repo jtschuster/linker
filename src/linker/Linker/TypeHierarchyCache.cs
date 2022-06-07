@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 using ILLink.Shared.TypeSystemProxy;
-using Mono.Cecil;
 
 namespace Mono.Linker
 {

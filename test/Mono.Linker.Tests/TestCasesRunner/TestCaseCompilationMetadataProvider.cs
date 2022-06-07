@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Mono.Cecil;
 using Mono.Linker.Tests.Cases.Expectations.Assertions;
 using Mono.Linker.Tests.Cases.Expectations.Metadata;
 using Mono.Linker.Tests.Extensions;
@@ -229,7 +228,7 @@ namespace Mono.Linker.Tests.TestCasesRunner
 			};
 		}
 
-		protected NPath[] SourceFilesForAttributeArgument (CustomAttributeArgument attributeArgument)
+		protected static NPath[] SourceFilesForAttributeArgument (CustomAttributeArgument attributeArgument)
 		{
 			return ((CustomAttributeArgument[]) attributeArgument.Value)
 				.Select (attributeArg => SourceFileForAttributeArgumentValue (attributeArg.Value))

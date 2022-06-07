@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using ILLink.Shared;
-using Mono.Cecil;
 
 namespace Mono.Linker
 {
@@ -69,7 +68,7 @@ namespace Mono.Linker
 			return false;
 		}
 
-		bool IsSuppressed (int id, ICustomAttributeProvider warningOrigin, out SuppressMessageInfo info)
+		static bool IsSuppressed (int id, ICustomAttributeProvider warningOrigin, out SuppressMessageInfo info)
 		{
 			info = default;
 
@@ -212,7 +211,7 @@ namespace Mono.Linker
 			}
 		}
 
-		IEnumerable<(SuppressMessageInfo Info, ICustomAttributeProvider Target)> DecodeAssemblyAndModuleSuppressions (ModuleDefinition module)
+		static IEnumerable<(SuppressMessageInfo Info, ICustomAttributeProvider Target)> DecodeAssemblyAndModuleSuppressions (ModuleDefinition module)
 		{
 			AssemblyDefinition assembly = module.Assembly;
 			foreach (var suppression in DecodeGlobalSuppressions (module, assembly))

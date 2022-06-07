@@ -5,8 +5,6 @@ using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
-using Mono.Cecil;
-using Mono.Cecil.Cil;
 
 namespace Mono.Linker
 {

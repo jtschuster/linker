@@ -7,7 +7,6 @@ using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Text;
 using ILLink.Shared;
-using Mono.Cecil;
 
 namespace Mono.Linker
 {

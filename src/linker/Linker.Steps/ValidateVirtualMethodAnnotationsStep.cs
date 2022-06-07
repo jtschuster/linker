@@ -3,7 +3,6 @@
 
 using System.Diagnostics.CodeAnalysis;
 using ILLink.Shared;
-using Mono.Cecil;
 
 namespace Mono.Linker.Steps
 {
@@ -16,7 +15,7 @@ namespace Mono.Linker.Steps
 				var baseMethods = annotations.GetBaseMethods (method);
 				if (baseMethods != null) {
 					foreach (var baseMethod in baseMethods) {
-						annotations.FlowAnnotations.ValidateMethodAnnotationsAreSame (method, baseMethod);
+						ILLink.Shared.TrimAnalysis.FlowAnnotations.ValidateMethodAnnotationsAreSame (method, baseMethod);
 						ValidateMethodRequiresUnreferencedCodeAreSame (method, baseMethod);
 					}
 				}
@@ -30,7 +29,7 @@ namespace Mono.Linker.Steps
 						if (annotations.VirtualMethodsWithAnnotationsToValidate.Contains (overrideInformation.Override))
 							continue;
 
-						annotations.FlowAnnotations.ValidateMethodAnnotationsAreSame (overrideInformation.Override, method);
+						ILLink.Shared.TrimAnalysis.FlowAnnotations.ValidateMethodAnnotationsAreSame (overrideInformation.Override, method);
 						ValidateMethodRequiresUnreferencedCodeAreSame (overrideInformation.Override, method);
 					}
 				}
@@ -40,8 +39,8 @@ namespace Mono.Linker.Steps
 		void ValidateMethodRequiresUnreferencedCodeAreSame (MethodDefinition method, MethodDefinition baseMethod)
 		{
 			var annotations = Context.Annotations;
-			bool methodHasAttribute = annotations.IsInRequiresUnreferencedCodeScope (method);
-			if (methodHasAttribute != annotations.IsInRequiresUnreferencedCodeScope (baseMethod)) {
+			bool methodHasAttribute = AnnotationStore.IsInRequiresUnreferencedCodeScope (method);
+			if (methodHasAttribute != AnnotationStore.IsInRequiresUnreferencedCodeScope (baseMethod)) {
 				string message = MessageFormat.FormatRequiresAttributeMismatch (methodHasAttribute,
 					baseMethod.DeclaringType.IsInterface, nameof (RequiresUnreferencedCodeAttribute), method.GetDisplayName (), baseMethod.GetDisplayName ());
 				Context.LogWarning (method, DiagnosticId.RequiresUnreferencedCodeAttributeMismatch, message);

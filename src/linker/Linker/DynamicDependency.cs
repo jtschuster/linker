@@ -4,7 +4,6 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
 using ILLink.Shared;
-using Mono.Cecil;
 
 namespace Mono.Linker
 {

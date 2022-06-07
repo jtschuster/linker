@@ -2,7 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Text;
-using Mono.Cecil;
 
 namespace Mono.Linker
 {
@@ -50,25 +49,25 @@ namespace Mono.Linker
 		private static void VisitMethod (MethodDefinition method, StringBuilder builder, ITryResolveMetadata resolver)
 		{
 			builder.Append (MethodPrefix);
-			PartVisitor.Instance.VisitMethodDefinition (method, builder, resolver);
+			PartVisitor.VisitMethodDefinition (method, builder, resolver);
 		}
 
 		private static void VisitField (FieldDefinition field, StringBuilder builder, ITryResolveMetadata resolver)
 		{
 			builder.Append (FieldPrefix);
-			PartVisitor.Instance.VisitField (field, builder, resolver);
+			PartVisitor.VisitField (field, builder, resolver);
 		}
 
 		private static void VisitEvent (EventDefinition evt, StringBuilder builder, ITryResolveMetadata resolver)
 		{
 			builder.Append (EventPrefix);
-			PartVisitor.Instance.VisitEvent (evt, builder, resolver);
+			PartVisitor.VisitEvent (evt, builder, resolver);
 		}
 
 		private static void VisitProperty (PropertyDefinition property, StringBuilder builder, ITryResolveMetadata resolver)
 		{
 			builder.Append (PropertyPrefix);
-			PartVisitor.Instance.VisitProperty (property, builder, resolver);
+			PartVisitor.VisitProperty (property, builder, resolver);
 		}
 
 		private static void VisitTypeDefinition (TypeDefinition type, StringBuilder builder, ITryResolveMetadata resolver)

@@ -3,7 +3,6 @@
 
 using System;
 using System.Linq;
-using Mono.Cecil;
 using Mono.Linker.Tests.Extensions;
 using Mono.Linker.Tests.TestCases;
 
@@ -38,7 +37,7 @@ namespace Mono.Linker.Tests.TestCasesRunner
 			return _testCase.SourceFile.Parent.Combine (value);
 		}
 
-		protected SourceAndDestinationPair GetSourceAndRelativeDestinationValue (CustomAttribute attribute)
+		protected static SourceAndDestinationPair GetSourceAndRelativeDestinationValue (CustomAttribute attribute)
 		{
 			var fullSource = SourceFileForAttributeArgumentValue (attribute.ConstructorArguments.First ().Value);
 			var destinationFileName = (string) attribute.ConstructorArguments[1].Value;

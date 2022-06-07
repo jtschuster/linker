@@ -8,8 +8,6 @@ using System.Text;
 using System.Xml.XPath;
 using ILLink.Shared;
 
-using Mono.Cecil;
-
 namespace Mono.Linker.Steps
 {
 	public class DescriptorMarker : ProcessLinkerXmlBase

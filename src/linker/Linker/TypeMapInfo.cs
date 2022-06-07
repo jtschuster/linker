@@ -30,7 +30,6 @@
 //
 
 using System.Collections.Generic;
-using Mono.Cecil;
 
 namespace Mono.Linker
 {
@@ -208,12 +207,12 @@ namespace Mono.Linker
 			AddOverride (@base, @override, matchingInterfaceImplementation);
 		}
 
-		MethodDefinition? GetBaseMethodInTypeHierarchy (MethodDefinition method)
+		static MethodDefinition? GetBaseMethodInTypeHierarchy (MethodDefinition method)
 		{
 			return GetBaseMethodInTypeHierarchy (method.DeclaringType, method);
 		}
 
-		MethodDefinition? GetBaseMethodInTypeHierarchy (TypeDefinition type, MethodReference method)
+		static MethodDefinition? GetBaseMethodInTypeHierarchy (TypeDefinition type, MethodReference method)
 		{
 			TypeReference? @base = GetInflatedBaseType (type);
 			while (@base != null) {

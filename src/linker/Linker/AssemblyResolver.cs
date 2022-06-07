@@ -34,7 +34,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.MemoryMappedFiles;
 using ILLink.Shared;
-using Mono.Cecil;
 
 namespace Mono.Linker
 {
