@@ -595,6 +595,7 @@ namespace Mono.Linker.Steps
 
 				using (ScopeStack.PushScope (scope)) {
 					MarkInterfaceImplementations (type);
+					MarkMethodsIf (type.Methods, IsInterfaceMethodNeededByTypeDueToPreservedScope, new DependencyInfo (DependencyKind.VirtualNeededDueToPreservedScope, type), ScopeStack.CurrentScope.Origin);
 				}
 			}
 		}
@@ -2356,7 +2357,9 @@ namespace Mono.Linker.Steps
 		/// </remarks>
 		bool IsMethodNeededByTypeDueToPreservedScope (MethodDefinition method)
 		{
-			// Static methods may also have base methods in static interface methods. These methods are not captured by IsVirtual and must be checked separately
+			if (Annotations.IsMarked (method))
+				return false;
+			// All methods we care about here will be virtual or static
 			if (!(method.IsVirtual || method.IsStatic))
 				return false;
 
@@ -2365,6 +2368,8 @@ namespace Mono.Linker.Steps
 				return false;
 
 			foreach (MethodDefinition @base in base_list) {
+				if (!IgnoreScope (@base.DeclaringType.Scope) && !IsMethodNeededByTypeDueToPreservedScope (@base))
+					continue;
 				// Just because the type is marked does not mean we need interface methods.
 				// if the type is never instantiated, interfaces will be removed - but only if the optimization is enabled
 				if (@base.DeclaringType.IsInterface && Context.IsOptimizationEnabled (CodeOptimizations.UnusedInterfaces, method.DeclaringType))
@@ -2376,13 +2381,68 @@ namespace Mono.Linker.Steps
 				if (!@base.IsAbstract)
 					continue;
 
-				if (IgnoreScope (@base.DeclaringType.Scope))
-					return true;
-
-				if (IsMethodNeededByTypeDueToPreservedScope (@base))
-					return true;
+				return true;
 			}
 
+			return false;
+		}
+
+		/// <summary>
+		/// Returns whether a method is needed by an interface that is in preserve scope. This should be called after interface implementations have been marked.
+		/// </summary>
+		bool IsInterfaceMethodNeededByTypeDueToPreservedScope (MethodDefinition method)
+		{
+			if (Annotations.IsMarked (method))
+				return false;
+
+			var base_list = Annotations.GetBaseMethods (method);
+			if (base_list == null)
+				return false;
+
+			foreach (MethodDefinition @base in base_list) {
+				if (!@base.DeclaringType.IsInterface)
+					continue;
+
+				if (!IgnoreScope (@base.DeclaringType.Scope)
+					&& !IsInterfaceMethodNeededByTypeDueToPreservedScope (@base)
+					&& !IsMethodNeededByTypeDueToPreservedScope (@base))
+					continue;
+
+				// If the type doesn't implement the interface, skip
+				// Below this, we know the base must come from an interface in a preserved scope that the type implements
+				if (!(TryGetCorrespondingInterfaceImplementation (method.DeclaringType, @base.DeclaringType, out var iface)
+					&& Annotations.IsMarked (iface)))
+					continue;
+
+				// We need to keep all abstract methods from marked ifaceImpls for valid IL
+				// Below this, we know the base has a default implementation
+				if (@base.IsAbstract)
+					return true;
+
+				// If the method is static, we'll need the method if the base is marked AND the type could be used as a type argument constrained to the interface (tracked by IsRelevantToVariantCasting)
+				// We also need to keep the method if it's in library mode or could be used in code we can't see. We'll use the UnusedInterfaces as a signal for that
+				if (@base.IsStatic &&
+					(!Context.IsOptimizationEnabled(CodeOptimizations.UnusedInterfaces, method)
+					|| (Annotations.IsMarked (@base)
+						&& Annotations.IsRelevantToVariantCasting (method.DeclaringType))))
+					return true;
+
+				// Instance methods only need to be kept if the type is instantiated, regardless of library mode or not
+				if (!@base.IsStatic && Annotations.IsInstantiated (method.DeclaringType))
+					return true;
+			}
+			return false;
+		}
+
+		bool TryGetCorrespondingInterfaceImplementation (TypeDefinition implementingType, TypeDefinition interfaceType, [NotNullWhen(true)]out InterfaceImplementation? interfaceImplementation)
+		{
+			foreach (var @interface in implementingType.Interfaces) {
+				if (Context.Resolve (@interface.InterfaceType)?.Equals (interfaceType) == true) {
+					interfaceImplementation = @interface;
+					return true;
+				}
+			}
+			interfaceImplementation = null;
 			return false;
 		}
 
