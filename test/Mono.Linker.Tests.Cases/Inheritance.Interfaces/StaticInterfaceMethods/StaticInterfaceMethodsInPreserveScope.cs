@@ -25,23 +25,25 @@ namespace Mono.Linker.Tests.Cases.Inheritance.Interfaces.StaticInterfaceMethods
 			x = typeof (IfaceMethodInPreserveScope);
 			x = typeof (AbstractStaticInPreserveScope.ExplcitImplementations);
 			x = typeof (AbstractStaticInPreserveScope);
-			x = typeof (IStaticVirtualMethods);
+			x = typeof (IStaticInterfaceWithDefaultImpls);
 			x = typeof (IStaticAbstractMethods);
 		}
 
+		// Unmarked interface methods with a default implementation don't need to be kept. They won't be called and aren't required for valid IL.
 		[Kept]
 		public static class IfaceMethodInPreserveScope
 		{
 			[Kept]
-			[KeptInterface (typeof (IStaticVirtualMethods))]
-			public class ExplcitImplementations : IStaticVirtualMethods
+			[KeptInterface (typeof (IStaticInterfaceWithDefaultImpls))]
+			public class ExplcitImplementations : IStaticInterfaceWithDefaultImpls
 			{
-				static int IStaticVirtualMethods.Property { get => 1; set => _ = value; }
-				static int IStaticVirtualMethods.Method () => 1;
-				int IStaticVirtualMethods.InstanceMethod () => 0;
+				static int IStaticInterfaceWithDefaultImpls.Property { get => 1; set => _ = value; }
+				static int IStaticInterfaceWithDefaultImpls.Method () => 1;
+				int IStaticInterfaceWithDefaultImpls.InstanceMethod () => 0;
 			}
 		}
 
+		// Any methods overriding an abstract method in a preserve scope should be kept to make the IL valid
 		[Kept]
 		public static class AbstractStaticInPreserveScope
 		{
