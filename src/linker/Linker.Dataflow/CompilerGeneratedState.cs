@@ -10,7 +10,7 @@ using ILLink.Shared;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 
-namespace Mono.Linker
+namespace Mono.Linker.Dataflow
 {
 	// Currently this is implemented using heuristics
 	public class CompilerGeneratedState
@@ -51,6 +51,14 @@ namespace Mono.Linker
 				foreach (var recursiveNestedType in GetCompilerGeneratedNestedTypes (nestedType))
 					yield return recursiveNestedType;
 			}
+		}
+
+		public static bool IsHoistedLocal (FieldDefinition field)
+		{
+			// Treat all fields on compiler-generated types as hoisted locals.
+			// This avoids depending on the name mangling scheme for hoisted locals.
+			var declaringTypeName = field.DeclaringType.Name;
+			return CompilerGeneratedNames.IsLambdaDisplayClass (declaringTypeName) || CompilerGeneratedNames.IsStateMachineType (declaringTypeName);
 		}
 
 		// "Nested function" refers to lambdas and local functions.
@@ -96,8 +104,6 @@ namespace Mono.Linker
 		/// </summary>
 		TypeDefinition? PopulateCacheForType (TypeDefinition type)
 		{
-			var originalType = type;
-
 			// Look in the declaring type if this is a compiler-generated type (state machine or display class).
 			// State machines can be emitted into display classes, so we may also need to go one more level up.
 			// To avoid depending on implementation details, we go up until we see a non-compiler-generated type.
@@ -167,8 +173,8 @@ namespace Mono.Linker
 
 				if (TryGetStateMachineType (method, out TypeDefinition? stateMachineType)) {
 					Debug.Assert (stateMachineType.DeclaringType == type ||
-						(CompilerGeneratedNames.IsGeneratedMemberName (stateMachineType.DeclaringType.Name) &&
-						 stateMachineType.DeclaringType.DeclaringType == type));
+						CompilerGeneratedNames.IsGeneratedMemberName (stateMachineType.DeclaringType.Name) &&
+						 stateMachineType.DeclaringType.DeclaringType == type);
 					callGraph.TrackCall (method, stateMachineType);
 
 					if (!_compilerGeneratedTypeToUserCodeMethod.TryAdd (stateMachineType, method)) {
@@ -390,7 +396,7 @@ namespace Mono.Linker
 					return true;
 			}
 
-			TypeDefinition sourceType = (sourceMember as TypeDefinition) ?? sourceMember.DeclaringType;
+			TypeDefinition sourceType = sourceMember as TypeDefinition ?? sourceMember.DeclaringType;
 
 			if (_compilerGeneratedTypeToUserCodeMethod.TryGetValue (sourceType, out owningMethod))
 				return true;
