@@ -604,7 +604,16 @@ namespace Mono.Linker.Steps
 					}
 					// We need to check all methods here -- _interfaceOverrides won't have preserved scope methods if they are not
 					//  marked, but abstract methods from preserved scope must still be kept for valid IL
-					MarkMethodsIf (type.Methods, IsInterfaceMethodNeededByTypeDueToPreservedScope, new DependencyInfo (DependencyKind.VirtualNeededDueToPreservedScope, type), ScopeStack.CurrentScope.Origin);
+					foreach (var method in type.Methods) {
+						var bases = Annotations.GetBaseMethods (method);
+						if (bases is null)
+							continue;
+						foreach(var @base in bases) {
+							if (IgnoreScope(@base.DeclaringType.Scope))
+								_interfaceOverrides.Add ((new OverrideInformation (@base, method, Context), scope));
+						}
+					}
+					//MarkMethodsIf (type.Methods, IsInterfaceMethodNeededByTypeDueToPreservedScope, new DependencyInfo (DependencyKind.VirtualNeededDueToPreservedScope, type), ScopeStack.CurrentScope.Origin);
 				}
 			}
 
@@ -2361,7 +2370,7 @@ namespace Mono.Linker.Steps
 			if (Annotations.IsMarked (method))
 				return false;
 			// All methods we care about here will be virtual or static
-			if (!(method.IsVirtual || method.IsStatic))
+			if (!method.IsVirtual)
 				return false;
 
 			var base_list = Annotations.GetBaseMethods (method);
@@ -2369,11 +2378,11 @@ namespace Mono.Linker.Steps
 				return false;
 
 			foreach (MethodDefinition @base in base_list) {
-				if (!IgnoreScope (@base.DeclaringType.Scope) && !IsMethodNeededByTypeDueToPreservedScope (@base))
-					continue;
-
 				// Skip interface methods, they will be captured later by IsInterfaceMethodNeededByTypeDueToPreservedScope
 				if (@base.DeclaringType.IsInterface)
+					continue;
+
+				if (!IgnoreScope (@base.DeclaringType.Scope) && !IsMethodNeededByTypeDueToPreservedScope (@base))
 					continue;
 
 				// If the type is marked, we need to keep overrides of abstract members defined in assemblies
@@ -2406,11 +2415,10 @@ namespace Mono.Linker.Steps
 					continue;
 
 				if (!IgnoreScope (@base.DeclaringType.Scope)
-					&& !IsInterfaceMethodNeededByTypeDueToPreservedScope (@base)
-					&& !IsMethodNeededByTypeDueToPreservedScope (@base))
+					&& !IsInterfaceMethodNeededByTypeDueToPreservedScope (@base))
 					continue;
-				if (!Context.IsOptimizationEnabled (CodeOptimizations.UnusedInterfaces, method))
-					return true;
+
+				//if (!Context.IsOptimizationEnabled (CodeOptimizations.UnusedInterfaces, method)) return true;
 
 				// If the type doesn't implement the interface, skip
 				// Below this, we know the base must come from an interface in a preserved scope that the type implements
@@ -2431,7 +2439,7 @@ namespace Mono.Linker.Steps
 						&& Annotations.IsRelevantToVariantCasting (method.DeclaringType))))
 					return true;
 
-				// Instance methods only need to be kept if the type is instantiated, regardless of library mode or not
+				// Instance methods only need to be kept if the type is instantiated
 				if (!@base.IsStatic && Annotations.IsInstantiated (method.DeclaringType))
 					return true;
 			}
@@ -2454,7 +2462,9 @@ namespace Mono.Linker.Steps
 			// If the interface implementation is not marked, do not mark the implementation method
 			// A type that doesn't implement the interface isn't required to have methods that implement the interface.
 			InterfaceImplementation? iface = overrideInformation.MatchingInterfaceImplementation;
-			if (!(iface is not null && (Annotations.IsMarked (iface) || IsInterfaceImplementationMarkedRecursively (method.DeclaringType, @base.DeclaringType))))
+			if (!((iface is not null && Annotations.IsMarked (iface))
+				|| 
+				IsInterfaceImplementationMarkedRecursively (method.DeclaringType, @base.DeclaringType)))
 				return false;
 
 			// If the interface method is not marked and the interface doesn't come from a preserved scope, do not mark the implementation method
@@ -2472,7 +2482,7 @@ namespace Mono.Linker.Steps
 			if (!Annotations.IsMarked (@base))
 				return false;
 
-			// If the method is static and the implementing type is relevant to variant casting, mark the implementation method. 		
+			// If the method is static and the implementing type is relevant to variant casting, mark the implementation method.
 			// A static method may only be called through a constrained call if the type is relevant to variant casting.
 			if (@base.IsStatic)
 				return Annotations.IsRelevantToVariantCasting (method.DeclaringType);
