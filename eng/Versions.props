@@ -9,7 +9,6 @@
     <PreReleaseVersionLabel>1</PreReleaseVersionLabel>
   </PropertyGroup>
   <PropertyGroup>
-    <UsingToolMicrosoftNetCompilers>true</UsingToolMicrosoftNetCompilers>
     <!-- ilasm -->
     <MicrosoftNETSdkILPackageVersion>7.0.0-rc.1.22374.4</MicrosoftNETSdkILPackageVersion>
     <!-- see https://github.com/dotnet/runtime/issues/1338 -->
@@ -21,9 +20,10 @@
     <MicrosoftDotNetApiCompatVersion>7.0.0-beta.22372.1</MicrosoftDotNetApiCompatVersion>
     <MicrosoftDotNetCodeAnalysisVersion>6.0.0-beta.21271.1</MicrosoftDotNetCodeAnalysisVersion>
     <MicrosoftCodeAnalysisCSharpCodeStyleVersion>3.10.0-2.final</MicrosoftCodeAnalysisCSharpCodeStyleVersion>
-    <MicrosoftCodeAnalysisVersion>4.3.0-2.final</MicrosoftCodeAnalysisVersion>
+    <MicrosoftCodeAnalysisVersion>4.4.0-2.22379.3</MicrosoftCodeAnalysisVersion>
     <MicrosoftCodeAnalysisCSharpAnalyzerTestingXunitVersion>1.0.1-beta1.*</MicrosoftCodeAnalysisCSharpAnalyzerTestingXunitVersion>
     <MicrosoftCodeAnalysisBannedApiAnalyzersVersion>3.3.2</MicrosoftCodeAnalysisBannedApiAnalyzersVersion>
+    <MicrosoftILVerificationVersion>7.0.0-preview.6.22324.4</MicrosoftILVerificationVersion>
     <!-- This controls the version of the cecil package, or the version of cecil in the project graph
          when we build the cecil submodule. The reference assembly package will depend on this version of cecil.
          Keep this in sync with ProjectInfo.cs in the submodule. -->
