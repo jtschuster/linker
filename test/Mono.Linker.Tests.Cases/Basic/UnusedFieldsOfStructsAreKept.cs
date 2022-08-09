@@ -1,3 +1,5 @@
+using System;
+using System.Runtime.CompilerServices;
 using Mono.Linker.Tests.Cases.Expectations.Assertions;
 using System.Runtime.CompilerServices;
 using System;
@@ -31,9 +33,9 @@ namespace Mono.Linker.Tests.Cases.Basic
 			}
 		}
 
-		[KeptAttributeAttribute(typeof(IsByRefLikeAttribute))]
-		[KeptAttributeAttribute(typeof(CompilerFeatureRequiredAttribute))]
-		[KeptAttributeAttribute(typeof(ObsoleteAttribute))]
+		[KeptAttributeAttribute (typeof (IsByRefLikeAttribute))]
+		[KeptAttributeAttribute (typeof (CompilerFeatureRequiredAttribute))]
+		[KeptAttributeAttribute (typeof (ObsoleteAttribute))]
 		ref struct R
 		{
 			[Kept]
