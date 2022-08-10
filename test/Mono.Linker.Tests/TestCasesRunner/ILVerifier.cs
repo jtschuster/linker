@@ -123,7 +123,6 @@ namespace Mono.Linker.Tests.TestCasesRunner
 		PEReader? ILVerify.IResolver.ResolveModule (AssemblyName referencingModule, string fileName)
 			=> Resolve (Path.GetFileNameWithoutExtension (fileName));
 
-
 		public string GetErrorMessage (VerificationResult result)
 		{
 			return $"IL Verification error:\n{result.Message}";
