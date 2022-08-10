@@ -1,22 +1,15 @@
 // Copyright (c) .NET Foundation and contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using System;
-using ILVerify;
-using System.Reflection;
-using System.Reflection.PortableExecutable;
-using System.Reflection.Metadata;
-using Internal.TypeSystem.Ecma;
+using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Collections.Generic;
-using Mono.Linker.Tests.Extensions;
-using NUnit.Framework;
-using System.Resources;
-using System.Diagnostics.CodeAnalysis;
+using System.Reflection;
+using System.Reflection.PortableExecutable;
 using System.Runtime.Loader;
-using System.Drawing;
+using ILVerify;
+using Mono.Linker.Tests.Extensions;
 
 #nullable enable
 namespace Mono.Linker.Tests.TestCasesRunner
@@ -24,8 +17,6 @@ namespace Mono.Linker.Tests.TestCasesRunner
 	class ILVerifier : ILVerify.IResolver
 	{
 		Verifier _verifier;
-		string _assemblyName;
-		NPath _assemblyPath;
 		NPath _assemblyFolder;
 		NPath _frameworkFolder;
 		Dictionary<string, PEReader> _assemblyCache;
@@ -35,15 +26,14 @@ namespace Mono.Linker.Tests.TestCasesRunner
 
 		public ILVerifier (NPath assemblyPath)
 		{
-			_assemblyPath = assemblyPath;
-			_assemblyName = assemblyPath.FileNameWithoutExtension;
+			var assemblyName = assemblyPath.FileNameWithoutExtension;
 			_assemblyFolder = assemblyPath.Parent;
 			_assemblyCache = new Dictionary<string, PEReader> ();
 			_frameworkFolder = typeof (object).Assembly.Location.ToNPath ().Parent;
 			_alc = new AssemblyLoadContext (_assemblyFolder.FileName);
 			LoadAssembly ("mscorlib");
 			LoadAssembly ("System.Private.CoreLib");
-			LoadAssemblyFromPath (_assemblyName, _assemblyPath);
+			LoadAssemblyFromPath (assemblyName, assemblyPath);
 
 			_verifier = new ILVerify.Verifier (
 				this,
@@ -53,7 +43,7 @@ namespace Mono.Linker.Tests.TestCasesRunner
 				});
 			_verifier.SetSystemModuleName (new AssemblyName ("mscorlib"));
 
-			var allResults = _verifier.Verify (Resolve (_assemblyName))
+			var allResults = _verifier.Verify (Resolve (assemblyName))
 				?? Enumerable.Empty<VerificationResult> ();
 
 			Results = allResults.Where (r => r.Code switch {

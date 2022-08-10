@@ -18,6 +18,7 @@
 
   <ItemGroup>
     <Folder Include="Properties\" />
+    <Folder Include="TestCasesRunner\" />
     <Folder Include="Extensions\" />
   </ItemGroup>
   <ItemGroup>
