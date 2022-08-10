@@ -58,6 +58,7 @@ namespace Mono.Linker.Tests.TestCasesRunner
 				Assert.Fail (verifier.GetErrorMessage (result));
 			}
 		}
+
 		static bool ShouldValidateIL (AssemblyDefinition inputAssembly)
 		{
 			if (HasAttribute (inputAssembly, nameof (SkipPeVerifyAttribute)))
@@ -73,6 +74,7 @@ namespace Mono.Linker.Tests.TestCasesRunner
 
 			return true;
 		}
+
 		public virtual void Check (LinkedTestCaseResult linkResult)
 		{
 			InitializeResolvers (linkResult);
