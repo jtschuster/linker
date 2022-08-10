@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -18,7 +18,6 @@
 
   <ItemGroup>
     <Folder Include="Properties\" />
-    <Folder Include="TestCasesRunner\" />
     <Folder Include="Extensions\" />
   </ItemGroup>
   <ItemGroup>
@@ -32,6 +31,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="$(MicrosoftCodeAnalysisVersion)" />
+    <PackageReference Include="Microsoft.ILVerification" Version="$(MicrosoftILVerificationVersion)" />
     <PackageReference Include="nunit" Version="3.12.0" />
     <PackageReference Include="NUnit3TestAdapter" Version="4.1.0" />
     <!-- This reference is purely so that the linker can resolve this
