@@ -4,6 +4,7 @@
 using System.Diagnostics.CodeAnalysis;
 using ILLink.RoslynAnalyzer.TrimAnalysis;
 using ILLink.Shared.TypeSystemProxy;
+using ILLink.Shared.DataFlow;
 
 namespace ILLink.Shared.TrimAnalysis
 {
@@ -35,5 +36,9 @@ namespace ILLink.Shared.TrimAnalysis
 
 		private partial void MarkTypeForDynamicallyAccessedMembers (in TypeProxy type, DynamicallyAccessedMemberTypes dynamicallyAccessedMemberTypes) =>
 			_reflectionAccessAnalyzer.GetReflectionAccessDiagnostics (_diagnosticContext, type.Type, dynamicallyAccessedMemberTypes);
+
+		private partial (SingleValue Source, ValueWithDynamicallyAccessedMembers Target) Quirk (SingleValue source, ValueWithDynamicallyAccessedMembers target) {
+			return (source, target);
+		}
 	}
 }

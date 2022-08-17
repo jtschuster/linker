@@ -6,6 +6,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Runtime.InteropServices;
 using ILLink.Shared.TypeSystemProxy;
+using ILLink.Shared.DataFlow;
 using MultiValue = ILLink.Shared.DataFlow.ValueSet<ILLink.Shared.DataFlow.SingleValue>;
 
 // This is needed due to NativeAOT which doesn't enable nullable globally yet
@@ -18,12 +19,16 @@ namespace ILLink.Shared.TrimAnalysis
 	{
 		readonly DiagnosticContext _diagnosticContext;
 
+		private partial (SingleValue Source, ValueWithDynamicallyAccessedMembers Target) Quirk (SingleValue source, ValueWithDynamicallyAccessedMembers target);
+
 		public void Invoke (in MultiValue value, ValueWithDynamicallyAccessedMembers targetValue)
 		{
 			if (targetValue.DynamicallyAccessedMemberTypes == DynamicallyAccessedMemberTypes.None)
 				return;
 
-			foreach (var uniqueValue in value) {
+			foreach (var v in value) {
+				var uniqueValue = v;
+
 				if (targetValue.DynamicallyAccessedMemberTypes == DynamicallyAccessedMemberTypes.PublicParameterlessConstructor
 					&& uniqueValue is GenericParameterValue genericParam
 					&& genericParam.GenericParameter.HasDefaultConstructorConstraint ()) {
@@ -34,6 +39,13 @@ namespace ILLink.Shared.TrimAnalysis
 					}
 					var availableMemberTypes = valueWithDynamicallyAccessedMembers.DynamicallyAccessedMemberTypes;
 					if (!Annotations.SourceHasRequiredAnnotations (availableMemberTypes, targetValue.DynamicallyAccessedMemberTypes, out var missingMemberTypes)) {
+
+						(uniqueValue, targetValue) = Quirk (uniqueValue, targetValue);
+						if (uniqueValue is not ValueWithDynamicallyAccessedMembers) {
+							AddDiagnosticForUnknownValue (targetValue);
+							continue;
+						}
+
 						(var diagnosticId, var diagnosticArguments) = Annotations.GetDiagnosticForAnnotationMismatch (valueWithDynamicallyAccessedMembers, targetValue, missingMemberTypes);
 						_diagnosticContext.AddDiagnostic (diagnosticId, diagnosticArguments);
 					}
@@ -51,18 +63,22 @@ namespace ILLink.Shared.TrimAnalysis
 				} else if (uniqueValue == NullValue.Instance) {
 					// Ignore - probably unreachable path as it would fail at runtime anyway.
 				} else {
-					DiagnosticId diagnosticId = targetValue switch {
-						MethodParameterValue => DiagnosticId.MethodParameterCannotBeStaticallyDetermined,
-						MethodReturnValue => DiagnosticId.MethodReturnValueCannotBeStaticallyDetermined,
-						FieldValue => DiagnosticId.FieldValueCannotBeStaticallyDetermined,
-						MethodThisParameterValue => DiagnosticId.ImplicitThisCannotBeStaticallyDetermined,
-						GenericParameterValue => DiagnosticId.TypePassedToGenericParameterCannotBeStaticallyDetermined,
-						_ => throw new NotImplementedException ($"unsupported target value {targetValue}")
-					};
-
-					_diagnosticContext.AddDiagnostic (diagnosticId, targetValue.GetDiagnosticArgumentsForAnnotationMismatch ().ToArray ());
+					AddDiagnosticForUnknownValue (targetValue);
 				}
 			}
+		}
+
+		void AddDiagnosticForUnknownValue (ValueWithDynamicallyAccessedMembers targetValue) {
+			DiagnosticId diagnosticId = targetValue switch {
+				MethodParameterValue => DiagnosticId.MethodParameterCannotBeStaticallyDetermined,
+				MethodReturnValue => DiagnosticId.MethodReturnValueCannotBeStaticallyDetermined,
+				FieldValue => DiagnosticId.FieldValueCannotBeStaticallyDetermined,
+				MethodThisParameterValue => DiagnosticId.ImplicitThisCannotBeStaticallyDetermined,
+				GenericParameterValue => DiagnosticId.TypePassedToGenericParameterCannotBeStaticallyDetermined,
+				_ => throw new NotImplementedException ($"unsupported target value {targetValue}")
+			};
+
+			_diagnosticContext.AddDiagnostic (diagnosticId, targetValue.GetDiagnosticArgumentsForAnnotationMismatch ().ToArray ());
 		}
 
 		public partial bool TryResolveTypeNameAndMark (string typeName, bool needsAssemblyName, out TypeProxy type);
