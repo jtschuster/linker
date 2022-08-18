@@ -1154,7 +1154,7 @@ namespace Mono.Linker.Dataflow
 				currentStack.Push (new StackSlot (methodReturnValue));
 
 			if (_context.WarnVersion > WarnVersion.ILLink5)
-				AssignRefAndOutParameters (callingMethodBody, calledMethod, methodArguments, operation, locals, curBasicBlock);
+				AssignRefAndOutParameters (callingMethodBody, calledMethod, methodArguments, operation, locals, curBasicBlock, ref interproceduralState);
 
 			foreach (var param in methodArguments) {
 				foreach (var v in param) {

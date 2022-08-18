@@ -29,6 +29,7 @@ namespace ILLink.Shared.TrimAnalysis
 			_annotations = FlowAnnotations.Instance;
 			_reflectionAccessAnalyzer = new ReflectionAccessAnalyzer ();
 			_requireDynamicallyAccessedMembersAction = new (diagnosticContext, _reflectionAccessAnalyzer);
+			_warnVersion = WarnVersion.Latest;
 		}
 
 		private partial IEnumerable<SystemReflectionMethodBaseValue> GetMethodsOnTypeHierarchy (TypeProxy type, string name, BindingFlags? bindingFlags)

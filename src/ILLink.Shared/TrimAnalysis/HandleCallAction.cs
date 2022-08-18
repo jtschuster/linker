@@ -26,6 +26,7 @@ namespace ILLink.Shared.TrimAnalysis
 		readonly DiagnosticContext _diagnosticContext;
 		readonly FlowAnnotations _annotations;
 		readonly RequireDynamicallyAccessedMembersAction _requireDynamicallyAccessedMembersAction;
+		readonly WarnVersion _warnVersion;
 
 		public bool Invoke (MethodProxy calledMethod, MultiValue instanceValue, IReadOnlyList<MultiValue> argumentValues, out MultiValue methodReturnValue, out IntrinsicId intrinsicId)
 		{
@@ -1217,6 +1218,7 @@ namespace ILLink.Shared.TrimAnalysis
 
 		bool AnalyzeGenericInstantiationTypeArray (in MultiValue arrayParam, in MethodProxy calledMethod, ImmutableArray<GenericParameterValue> genericParameters)
 		{
+			var warnVersion = _warnVersion; // Get around compiler issue to use _warnVersion in local method
 			bool hasRequirements = false;
 			foreach (var genericParameter in genericParameters) {
 				if (GetGenericParameterEffectiveMemberTypes (genericParameter) != DynamicallyAccessedMemberTypes.None) {
@@ -1268,10 +1270,12 @@ namespace ILLink.Shared.TrimAnalysis
 			// - NeedsNew<SpecificType> - MarkStep will simply mark the default .ctor of SpecificType in this case, it has nothing to do with reflection
 			// - NeedsNew<TOuter> - this should be validated by the compiler/IL - TOuter must have matching constraints by definition, so nothing to validate
 			// - typeof(NeedsNew<>).MakeGenericType(typeOuter) - for this case we have to do it by hand as it's reflection. This is where this method helps.
-			static DynamicallyAccessedMemberTypes GetGenericParameterEffectiveMemberTypes (GenericParameterValue genericParameter)
+			DynamicallyAccessedMemberTypes GetGenericParameterEffectiveMemberTypes (GenericParameterValue genericParameter)
 			{
 				DynamicallyAccessedMemberTypes result = genericParameter.DynamicallyAccessedMemberTypes;
-				if (genericParameter.GenericParameter.HasDefaultConstructorConstraint ())
+				if (genericParameter.GenericParameter.HasDefaultConstructorConstraint () &&
+					warnVersion > WarnVersion.ILLink5
+					)
 					result |= DynamicallyAccessedMemberTypes.PublicParameterlessConstructor;
 
 				return result;

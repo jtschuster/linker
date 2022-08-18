@@ -30,6 +30,7 @@ namespace ILLink.Shared.TrimAnalysis
 			_callingMethodDefinition = callingMethodDefinition;
 			_annotations = context.Annotations.FlowAnnotations;
 			_requireDynamicallyAccessedMembersAction = new (reflectionMarker, diagnosticContext, _context);
+			_warnVersion = context.WarnVersion;
 		}
 
 		private partial bool MethodIsTypeConstructor (MethodProxy method)
