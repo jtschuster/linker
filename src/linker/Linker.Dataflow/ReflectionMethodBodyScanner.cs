@@ -197,14 +197,20 @@ namespace Mono.Linker.Dataflow
 			case IntrinsicId.Type_GetInterface:
 			case IntrinsicId.Type_get_AssemblyQualifiedName:
 			case IntrinsicId.RuntimeHelpers_RunClassConstructor:
-			case var callType when (callType == IntrinsicId.Type_GetConstructors || callType == IntrinsicId.Type_GetMethods || callType == IntrinsicId.Type_GetFields ||
-				callType == IntrinsicId.Type_GetProperties || callType == IntrinsicId.Type_GetEvents || callType == IntrinsicId.Type_GetNestedTypes || callType == IntrinsicId.Type_GetMembers)
+			case var callType when (callType is
+				IntrinsicId.Type_GetConstructors
+				or IntrinsicId.Type_GetMethods
+				or IntrinsicId.Type_GetFields
+				or IntrinsicId.Type_GetProperties
+				or IntrinsicId.Type_GetEvents
+				or IntrinsicId.Type_GetNestedTypes
+				or IntrinsicId.Type_GetMembers)
 				&& calledMethod.DeclaringType.IsTypeOf (WellKnownType.System_Type)
-				&& calledMethod.GetParameterType ((NonThisParameterIndex) 0).IsTypeOf ("System.Reflection.BindingFlags")
+				&& calledMethod.GetParameterType ((ILParameterIndex) 1).IsTypeOf ("System.Reflection.BindingFlags")
 				&& calledMethod.HasThis:
-			case var fieldPropertyOrEvent when (fieldPropertyOrEvent == IntrinsicId.Type_GetField || fieldPropertyOrEvent == IntrinsicId.Type_GetProperty || fieldPropertyOrEvent == IntrinsicId.Type_GetEvent)
+			case var fieldPropertyOrEvent when (fieldPropertyOrEvent is IntrinsicId.Type_GetField or IntrinsicId.Type_GetProperty or IntrinsicId.Type_GetEvent)
 				&& calledMethod.DeclaringType.IsTypeOf (WellKnownType.System_Type)
-				&& calledMethod.GetParameterType ((NonThisParameterIndex) 0).IsTypeOf (WellKnownType.System_String)
+				&& calledMethod.GetParameterType ((ILParameterIndex) 1).IsTypeOf (WellKnownType.System_String)
 				&& calledMethod.HasThis:
 			case var getRuntimeMember when getRuntimeMember == IntrinsicId.RuntimeReflectionExtensions_GetRuntimeEvent
 				|| getRuntimeMember == IntrinsicId.RuntimeReflectionExtensions_GetRuntimeField
@@ -215,7 +221,8 @@ namespace Mono.Linker.Dataflow
 			case IntrinsicId.Type_GetNestedType:
 			case IntrinsicId.Nullable_GetUnderlyingType:
 			case IntrinsicId.Expression_Property when calledMethod.HasParameterOfType ((ILParameterIndex) 1, "System.Reflection.MethodInfo"):
-			case var fieldOrPropertyIntrinsic when fieldOrPropertyIntrinsic == IntrinsicId.Expression_Field || fieldOrPropertyIntrinsic == IntrinsicId.Expression_Property:
+			case IntrinsicId.Expression_Field:
+			case IntrinsicId.Expression_Property:
 			case IntrinsicId.Type_get_BaseType:
 			case IntrinsicId.Type_GetConstructor:
 			case IntrinsicId.MethodBase_GetMethodFromHandle:

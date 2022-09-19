@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using ILLink.Shared;
 using Microsoft.CodeAnalysis;
@@ -63,11 +64,31 @@ namespace ILLink.RoslynAnalyzer
 			return method.GetParameter (index)!.Locations[0];
 		}
 
+		public static DiagnosticId GetParameterOverrideMismatchDiagnostic (this IMethodSymbol method, ILParameterIndex index)
+		{
+			if (method.IsThisParameterIndex (index))
+				return DiagnosticId.DynamicallyAccessedMembersMismatchOnImplicitThisBetweenOverrides;
+			return DiagnosticId.DynamicallyAccessedMembersMismatchOnMethodParameterBetweenOverrides;
+		}
+
 		public static DynamicallyAccessedMemberTypes GetParameterDynamicallyAccessedMemberTypes (this IMethodSymbol method, ILParameterIndex index)
 		{
 			if (method.IsThisParameterIndex (index))
 				return method.GetDynamicallyAccessedMemberTypes ();
 			return method.GetParameter (index)!.GetDynamicallyAccessedMemberTypes ();
+		}
+
+		public static bool TryGetParameterCustomAttribute (this IMethodSymbol method, ILParameterIndex index, string customAttributeName, [NotNullWhen (true)] out AttributeData? attributeData)
+		{
+			if (method.IsThisParameterIndex (index))
+				return method.TryGetAttribute (customAttributeName, out attributeData);
+			return method.GetParameter (index)!.TryGetAttribute (customAttributeName, out attributeData);
+		}
+		public static IEnumerable<ILParameterIndex> ILParameterIndices (this IMethodSymbol method)
+		{
+			int count = method.GetILParameterCount ();
+			for (ILParameterIndex i = 0; (int) i < count; i++)
+				yield return i;
 		}
 
 		public static NonThisParameterIndex GetNonThisParameterIndex (this IMethodSymbol method, ILParameterIndex index)
