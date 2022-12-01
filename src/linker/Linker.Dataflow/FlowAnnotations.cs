@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
@@ -44,7 +45,7 @@ namespace ILLink.Shared.TrimAnalysis
 		{
 			if (GetAnnotations (param.Method.Method.DeclaringType).TryGetAnnotation (param.Method.Method, out var annotation) &&
 				annotation.ParameterAnnotations != null)
-				return annotation.ParameterAnnotations[(int) param.Index];
+				return annotation.ParameterAnnotations.Value[(int) param.Index];
 
 			return DynamicallyAccessedMemberTypes.None;
 		}
@@ -194,7 +195,7 @@ namespace ILLink.Shared.TrimAnalysis
 			// class, interface, struct can have annotations
 			DynamicallyAccessedMemberTypes typeAnnotation = GetMemberTypesForDynamicallyAccessedMembersAttribute (type);
 
-			var annotatedFields = new ArrayBuilder<FieldAnnotation> ();
+			var annotatedFields = new List<FieldAnnotation> ();
 
 			// First go over all fields with an explicit annotation
 			if (type.HasFields) {
@@ -262,7 +263,7 @@ namespace ILLink.Shared.TrimAnalysis
 					}
 
 					if (returnAnnotation != DynamicallyAccessedMemberTypes.None || paramAnnotations != null || genericParameterAnnotations != null) {
-						annotatedMethods.Add (new MethodAnnotations (method, paramAnnotations, returnAnnotation, genericParameterAnnotations));
+						annotatedMethods.Add (new MethodAnnotations (method, paramAnnotations?.ToImmutableArray (), returnAnnotation, genericParameterAnnotations?.ToImmutableArray ()));
 					}
 				}
 			}
@@ -317,17 +318,18 @@ namespace ILLink.Shared.TrimAnalysis
 						if (setterAnnotation?.ParameterAnnotations?[^1] is not (null or DynamicallyAccessedMemberTypes.None)) {
 							_context.LogWarning (setMethod, DiagnosticId.DynamicallyAccessedMembersConflictsBetweenPropertyAndAccessor, property.GetDisplayName (), setMethod.GetDisplayName ());
 						} else {
+							// Remove existing annotations
 							if (setterAnnotation is not null)
 								annotatedMethods.Remove (setterAnnotation.Value);
 
-							DynamicallyAccessedMemberTypes[] paramAnnotations;
-							if (setterAnnotation?.ParameterAnnotations is null)
-								paramAnnotations = new DynamicallyAccessedMemberTypes[setMethod.GetParametersCount ()];
-							else
-								paramAnnotations = setterAnnotation.Value.ParameterAnnotations;
+							// Copy existing annotations to a new array
+							DynamicallyAccessedMemberTypes[] paramAnnotations = new DynamicallyAccessedMemberTypes[setMethod.GetParametersCount ()];
+							if (setterAnnotation?.ParameterAnnotations is not null)
+								setterAnnotation.Value.ParameterAnnotations.Value.CopyTo (paramAnnotations);
 
+							// Make modify the 'value' parameter annotation to be annotated
 							paramAnnotations[paramAnnotations.Length - 1] = annotation;
-							annotatedMethods.Add (new MethodAnnotations (setMethod, paramAnnotations, DynamicallyAccessedMemberTypes.None, null));
+							annotatedMethods.Add (new MethodAnnotations (setMethod, paramAnnotations.ToImmutableArray (), DynamicallyAccessedMemberTypes.None, null));
 						}
 					}
 
@@ -394,7 +396,7 @@ namespace ILLink.Shared.TrimAnalysis
 				}
 			}
 
-			return new TypeAnnotations (type, typeAnnotation, annotatedMethods.ToArray (), annotatedFields.ToArray (), typeGenericParameterAnnotations);
+			return new TypeAnnotations (type, typeAnnotation, annotatedMethods?.ToImmutableArray (), annotatedFields.ToImmutableArray (), typeGenericParameterAnnotations?.ToImmutableArray ());
 		}
 
 		private IReadOnlyList<ICustomAttributeProvider>? GetGeneratedTypeAttributes (TypeDefinition typeDef)
@@ -471,15 +473,15 @@ namespace ILLink.Shared.TrimAnalysis
 
 			if (methodAnnotations.ParameterAnnotations != null || baseMethodAnnotations.ParameterAnnotations != null) {
 				if (methodAnnotations.ParameterAnnotations == null)
-					ValidateMethodParametersHaveNoAnnotations (baseMethodAnnotations.ParameterAnnotations!, method, baseMethod, method);
+					ValidateMethodParametersHaveNoAnnotations (baseMethodAnnotations.ParameterAnnotations!.Value, method, baseMethod, method);
 				else if (baseMethodAnnotations.ParameterAnnotations == null)
-					ValidateMethodParametersHaveNoAnnotations (methodAnnotations.ParameterAnnotations, method, baseMethod, method);
+					ValidateMethodParametersHaveNoAnnotations (methodAnnotations.ParameterAnnotations.Value, method, baseMethod, method);
 				else {
-					if (methodAnnotations.ParameterAnnotations.Length != baseMethodAnnotations.ParameterAnnotations.Length)
+					if (methodAnnotations.ParameterAnnotations.Value.Length != baseMethodAnnotations.ParameterAnnotations.Value.Length)
 						return;
 
-					for (int parameterIndex = 0; parameterIndex < methodAnnotations.ParameterAnnotations.Length; parameterIndex++) {
-						if (methodAnnotations.ParameterAnnotations[parameterIndex] != baseMethodAnnotations.ParameterAnnotations[parameterIndex])
+					for (int parameterIndex = 0; parameterIndex < methodAnnotations.ParameterAnnotations.Value.Length; parameterIndex++) {
+						if (methodAnnotations.ParameterAnnotations.Value[parameterIndex] != baseMethodAnnotations.ParameterAnnotations.Value[parameterIndex])
 							LogValidationWarning (
 								method.TryGetParameter ((ParameterIndex) parameterIndex)?.GetCustomAttributeProvider ()!,
 								baseMethod.TryGetParameter ((ParameterIndex) parameterIndex)?.GetCustomAttributeProvider ()!,
@@ -490,15 +492,15 @@ namespace ILLink.Shared.TrimAnalysis
 
 			if (methodAnnotations.GenericParameterAnnotations != null || baseMethodAnnotations.GenericParameterAnnotations != null) {
 				if (methodAnnotations.GenericParameterAnnotations == null)
-					ValidateMethodGenericParametersHaveNoAnnotations (baseMethodAnnotations.GenericParameterAnnotations!, method, baseMethod, method);
+					ValidateMethodGenericParametersHaveNoAnnotations (baseMethodAnnotations.GenericParameterAnnotations!.Value, method, baseMethod, method);
 				else if (baseMethodAnnotations.GenericParameterAnnotations == null)
-					ValidateMethodGenericParametersHaveNoAnnotations (methodAnnotations.GenericParameterAnnotations, method, baseMethod, method);
+					ValidateMethodGenericParametersHaveNoAnnotations (methodAnnotations.GenericParameterAnnotations.Value, method, baseMethod, method);
 				else {
-					if (methodAnnotations.GenericParameterAnnotations.Length != baseMethodAnnotations.GenericParameterAnnotations.Length)
+					if (methodAnnotations.GenericParameterAnnotations.Value.Length != baseMethodAnnotations.GenericParameterAnnotations.Value.Length)
 						return;
 
-					for (int genericParameterIndex = 0; genericParameterIndex < methodAnnotations.GenericParameterAnnotations.Length; genericParameterIndex++) {
-						if (methodAnnotations.GenericParameterAnnotations[genericParameterIndex] != baseMethodAnnotations.GenericParameterAnnotations[genericParameterIndex]) {
+					for (int genericParameterIndex = 0; genericParameterIndex < methodAnnotations.GenericParameterAnnotations.Value.Length; genericParameterIndex++) {
+						if (methodAnnotations.GenericParameterAnnotations.Value[genericParameterIndex] != baseMethodAnnotations.GenericParameterAnnotations.Value[genericParameterIndex]) {
 							LogValidationWarning (
 								method.GenericParameters[genericParameterIndex],
 								baseMethod.GenericParameters[genericParameterIndex],
@@ -509,7 +511,7 @@ namespace ILLink.Shared.TrimAnalysis
 			}
 		}
 
-		void ValidateMethodParametersHaveNoAnnotations (DynamicallyAccessedMemberTypes[] parameterAnnotations, MethodDefinition method, MethodDefinition baseMethod, IMemberDefinition origin)
+		void ValidateMethodParametersHaveNoAnnotations (ImmutableArray<DynamicallyAccessedMemberTypes> parameterAnnotations, MethodDefinition method, MethodDefinition baseMethod, IMemberDefinition origin)
 		{
 			for (int parameterIndex = 0; parameterIndex < parameterAnnotations.Length; parameterIndex++) {
 				var annotation = parameterAnnotations[parameterIndex];
@@ -521,7 +523,7 @@ namespace ILLink.Shared.TrimAnalysis
 			}
 		}
 
-		void ValidateMethodGenericParametersHaveNoAnnotations (DynamicallyAccessedMemberTypes[] genericParameterAnnotations, MethodDefinition method, MethodDefinition baseMethod, IMemberDefinition origin)
+		void ValidateMethodGenericParametersHaveNoAnnotations (ImmutableArray<DynamicallyAccessedMemberTypes> genericParameterAnnotations, MethodDefinition method, MethodDefinition baseMethod, IMemberDefinition origin)
 		{
 			for (int genericParameterIndex = 0; genericParameterIndex < genericParameterAnnotations.Length; genericParameterIndex++) {
 				if (genericParameterAnnotations[genericParameterIndex] != DynamicallyAccessedMemberTypes.None) {
@@ -568,16 +570,16 @@ namespace ILLink.Shared.TrimAnalysis
 		{
 			readonly TypeDefinition _type;
 			readonly DynamicallyAccessedMemberTypes _typeAnnotation;
-			readonly MethodAnnotations[]? _annotatedMethods;
-			readonly FieldAnnotation[]? _annotatedFields;
-			readonly DynamicallyAccessedMemberTypes[]? _genericParameterAnnotations;
+			readonly ImmutableArray<MethodAnnotations>? _annotatedMethods;
+			readonly ImmutableArray<FieldAnnotation>? _annotatedFields;
+			readonly ImmutableArray<DynamicallyAccessedMemberTypes>? _genericParameterAnnotations;
 
 			public TypeAnnotations (
 				TypeDefinition type,
 				DynamicallyAccessedMemberTypes typeAnnotation,
-				MethodAnnotations[]? annotatedMethods,
-				FieldAnnotation[]? annotatedFields,
-				DynamicallyAccessedMemberTypes[]? genericParameterAnnotations)
+				ImmutableArray<MethodAnnotations>? annotatedMethods,
+				ImmutableArray<FieldAnnotation>? annotatedFields,
+				ImmutableArray<DynamicallyAccessedMemberTypes>? genericParameterAnnotations)
 				=> (_type, _typeAnnotation, _annotatedMethods, _annotatedFields, _genericParameterAnnotations)
 				 = (type, typeAnnotation, annotatedMethods, annotatedFields, genericParameterAnnotations);
 
@@ -626,9 +628,9 @@ namespace ILLink.Shared.TrimAnalysis
 				if (_genericParameterAnnotations == null)
 					return false;
 
-				for (int genericParameterIndex = 0; genericParameterIndex < _genericParameterAnnotations.Length; genericParameterIndex++) {
+				for (int genericParameterIndex = 0; genericParameterIndex < _genericParameterAnnotations.Value.Length; genericParameterIndex++) {
 					if (_type.GenericParameters[genericParameterIndex] == genericParameter) {
-						annotation = _genericParameterAnnotations[genericParameterIndex];
+						annotation = _genericParameterAnnotations.Value[genericParameterIndex];
 						return true;
 					}
 				}
@@ -640,15 +642,15 @@ namespace ILLink.Shared.TrimAnalysis
 		readonly struct MethodAnnotations
 		{
 			public readonly MethodDefinition Method;
-			public readonly DynamicallyAccessedMemberTypes[]? ParameterAnnotations;
+			public readonly ImmutableArray<DynamicallyAccessedMemberTypes>? ParameterAnnotations;
 			public readonly DynamicallyAccessedMemberTypes ReturnParameterAnnotation;
-			public readonly DynamicallyAccessedMemberTypes[]? GenericParameterAnnotations;
+			public readonly ImmutableArray<DynamicallyAccessedMemberTypes>? GenericParameterAnnotations;
 
 			public MethodAnnotations (
 				MethodDefinition method,
-				DynamicallyAccessedMemberTypes[]? paramAnnotations,
+				ImmutableArray<DynamicallyAccessedMemberTypes>? paramAnnotations,
 				DynamicallyAccessedMemberTypes returnParamAnnotations,
-				DynamicallyAccessedMemberTypes[]? genericParameterAnnotations)
+				ImmutableArray<DynamicallyAccessedMemberTypes>? genericParameterAnnotations)
 				=> (Method, ParameterAnnotations, ReturnParameterAnnotation, GenericParameterAnnotations) =
 					(method, paramAnnotations, returnParamAnnotations, genericParameterAnnotations);
 
@@ -659,9 +661,9 @@ namespace ILLink.Shared.TrimAnalysis
 				if (GenericParameterAnnotations == null)
 					return false;
 
-				for (int genericParameterIndex = 0; genericParameterIndex < GenericParameterAnnotations.Length; genericParameterIndex++) {
+				for (int genericParameterIndex = 0; genericParameterIndex < GenericParameterAnnotations.Value.Length; genericParameterIndex++) {
 					if (Method.GenericParameters[genericParameterIndex] == genericParameter) {
-						annotation = GenericParameterAnnotations[genericParameterIndex];
+						annotation = GenericParameterAnnotations.Value[genericParameterIndex];
 						return true;
 					}
 				}
