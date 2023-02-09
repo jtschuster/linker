@@ -22,6 +22,8 @@
     <Nullable>disable</Nullable>
     <!-- Targets don't match the package id. This is intentional. -->
     <NoWarn>$(NoWarn);NU5129</NoWarn>
+    <!-- Workaround for possible SDK issue - see https://github.com/dotnet/linker/issues/3190 -->
+    <IncludeProjectsNotInAssetsFileInDepsFile>true</IncludeProjectsNotInAssetsFileInDepsFile>
   </PropertyGroup>
 
   <ItemGroup>
@@ -52,10 +54,7 @@
   <ItemGroup>
     <ProjectReference Include="../linker/Mono.Linker.csproj" PrivateAssets="All" Condition=" '$(TargetFramework)' == '$(NetCoreAppToolCurrent)' " />
     <PackageReference Condition="'$(UseCecilPackage)' == 'true'" Include="Mono.Cecil" Version="$(MonoCecilVersion)" PrivateAssets="All" Publish="True" />
-    <ProjectReference Condition="'$(UseCecilPackage)' != 'true'" Include="../../external/cecil/Mono.Cecil.csproj" PrivateAssets="All">
-      <!-- https://github.com/dotnet/sdk/issues/2280#issuecomment-392815466 -->
-      <SetTargetFramework>TargetFramework=netstandard2.0</SetTargetFramework>
-    </ProjectReference>
+    <ProjectReference Condition="'$(UseCecilPackage)' != 'true'" Include="../../external/cecil/Mono.Cecil.csproj" PrivateAssets="All" />
     <ProjectReference Condition="('$(UseCecilPackage)' != 'true') And ('$(TargetFramework)' != 'net472')" Include="../../external/cecil/symbols/pdb/Mono.Cecil.Pdb.csproj" PrivateAssets="All" />
   </ItemGroup>
 
